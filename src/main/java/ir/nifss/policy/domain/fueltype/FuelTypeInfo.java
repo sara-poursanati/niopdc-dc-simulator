@@ -1,8 +1,6 @@
 package ir.nifss.policy.domain.fueltype;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "FUEL_TYPE_INFO")
