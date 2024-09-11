@@ -1,7 +1,8 @@
 package ir.nifss.policy.domain.fueltypehistory;
 
-import ir.nifss.policy.domain.fueltype.FuelTypeInfo;
-import jakarta.persistence.*;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
