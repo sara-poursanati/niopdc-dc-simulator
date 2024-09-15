@@ -11,7 +11,7 @@
 
 	<groupId>ir.niopdc</groupId>
 	<artifactId>policy-packager</artifactId>
-	<version>1403.06.20</version>
+	<version>1403.06.24</version>
 	<name>policy-packager</name>
 	<description>Packages the policies and delivers them to the sender agent</description>
 
