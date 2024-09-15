@@ -1,4 +1,4 @@
-package ir.nifss.policy.domain.fueltypehistory;
+package ir.niopdc.policy.domain.fueltypehistory;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

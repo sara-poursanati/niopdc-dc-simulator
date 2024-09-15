@@ -1,4 +1,4 @@
-package ir.nifss.policy.domain.releaseinfo;
+package ir.niopdc.policy.domain.releaseinfo;
 
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;

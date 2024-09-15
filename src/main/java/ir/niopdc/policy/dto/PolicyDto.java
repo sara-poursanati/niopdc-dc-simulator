@@ -1,10 +1,14 @@
-package ir.nifss.policy.dto;
+package ir.niopdc.policy.dto;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class PolicyDto {
     private String policyId;
     private String version;
     private String versionName;
-    private Object data;
+    private final List<String> csvList = new ArrayList<>();
 
     public String getPolicyId() {
         return policyId;
@@ -30,11 +34,7 @@ public class PolicyDto {
         this.versionName = versionName;
     }
 
-    public Object getData() {
-        return data;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
+    public List<String> getCsvList() {
+        return csvList;
     }
 }

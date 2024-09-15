@@ -1,4 +1,4 @@
-package ir.nifss.policy;
+package ir.niopdc.policy;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

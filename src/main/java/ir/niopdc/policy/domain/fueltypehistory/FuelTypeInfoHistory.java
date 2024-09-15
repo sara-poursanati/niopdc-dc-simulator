@@ -1,27 +1,47 @@
-package ir.nifss.policy.domain.fueltype;
+package ir.niopdc.policy.domain.fueltypehistory;
 
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-@Entity
-@Table(name = "FUEL_TYPE_INFO")
-public class FuelTypeInfo {
+import java.time.LocalDateTime;
 
-    @Id
-    private String fuelType;
+@Entity
+@Table(name = "HISTORY_FUEL_TYPE")
+public class FuelTypeInfoHistory {
+
+    @EmbeddedId
+    private FuelTypeInfoHistoryKey id;
     private String fuelTypeName;
     private int p;
     private int p1;
     private int p2;
     private int p3;
+    private LocalDateTime releaseTime;
+    private LocalDateTime activeTime;
 
-    public String getFuelType() {
-        return fuelType;
+    public FuelTypeInfoHistoryKey getId() {
+        return id;
     }
 
-    public void setFuelType(String fuelType) {
-        this.fuelType = fuelType;
+    public void setId(FuelTypeInfoHistoryKey id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getActiveTime() {
+        return activeTime;
+    }
+
+    public void setActiveTime(LocalDateTime activeTime) {
+        this.activeTime = activeTime;
+    }
+
+    public LocalDateTime getReleaseTime() {
+        return releaseTime;
+    }
+
+    public void setReleaseTime(LocalDateTime releaseTime) {
+        this.releaseTime = releaseTime;
     }
 
     public String getFuelTypeName() {

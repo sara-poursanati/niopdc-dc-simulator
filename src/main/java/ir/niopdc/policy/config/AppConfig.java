@@ -1,4 +1,4 @@
-package ir.nifss.policy.config;
+package ir.niopdc.policy.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;

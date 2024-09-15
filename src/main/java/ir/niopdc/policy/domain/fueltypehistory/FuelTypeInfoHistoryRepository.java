@@ -1,4 +1,4 @@
-package ir.nifss.policy.domain.fueltypehistory;
+package ir.niopdc.policy.domain.fueltypehistory;
 
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
