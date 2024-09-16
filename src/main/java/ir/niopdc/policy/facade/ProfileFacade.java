@@ -2,7 +2,6 @@ package ir.niopdc.policy.facade;
 
 import ir.niopdc.common.entity.ProfileMessageModel;
 import ir.niopdc.common.entity.ProfileTopicPolicyModel;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
