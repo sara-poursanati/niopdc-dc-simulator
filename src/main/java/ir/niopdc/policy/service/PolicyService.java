@@ -2,9 +2,9 @@ package ir.niopdc.policy.service;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
-import ir.niopdc.commons.grpc.policy.PolicyRequest;
-import ir.niopdc.commons.grpc.policy.PolicyResponse;
-import ir.niopdc.commons.grpc.policy.PolicyServiceGrpc;
+import ir.niopdc.common.grpc.policy.PolicyRequest;
+import ir.niopdc.common.grpc.policy.PolicyResponse;
+import ir.niopdc.common.grpc.policy.PolicyServiceGrpc;
 import ir.niopdc.policy.dto.PolicyDto;
 import ir.niopdc.policy.facade.PolicyFacade;
 import net.devh.boot.grpc.server.service.GrpcService;
