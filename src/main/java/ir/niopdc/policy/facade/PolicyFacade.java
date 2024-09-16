@@ -1,4 +1,4 @@
-package ir.niopdc.policy.service;
+package ir.niopdc.policy.facade;
 
 import ir.niopdc.policy.domain.fueltype.FuelTypeInfoRepository;
 import ir.niopdc.policy.dto.PolicyDto;

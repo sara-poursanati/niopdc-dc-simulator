@@ -6,11 +6,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan(basePackages = {"ir.nifss.policy.*"})
+@ComponentScan(basePackages = {"ir.niopdc.policy.*"})
 public class AppConfig {
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
 }

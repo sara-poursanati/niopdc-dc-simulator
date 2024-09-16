@@ -6,6 +6,7 @@ import ir.niopdc.commons.grpc.PolicyRequest;
 import ir.niopdc.commons.grpc.PolicyResponse;
 import ir.niopdc.commons.grpc.PolicyServiceGrpc;
 import ir.niopdc.policy.dto.PolicyDto;
+import ir.niopdc.policy.facade.PolicyFacade;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
