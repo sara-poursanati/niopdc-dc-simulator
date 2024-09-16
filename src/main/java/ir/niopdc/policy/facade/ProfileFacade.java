@@ -12,6 +12,8 @@ import java.util.Random;
 @Service
 public class ProfileFacade {
 
+    private final Random random = new Random();
+
     public ProfileMessageModel getProfile(String gatewayId) {
         ProfileMessageModel profile = getProfileMessageModel(gatewayId);
 
@@ -20,10 +22,9 @@ public class ProfileFacade {
         return profile;
     }
 
-    private static void addPolicies(ProfileMessageModel profile) {
+    private void addPolicies(ProfileMessageModel profile) {
         List<ProfileTopicPolicyModel> policyList = new ArrayList<>();
 
-        Random random = new Random();
         for (int index =0; index < 5; index++) {
             ProfileTopicPolicyModel policy = getProfileTopicPolicyModel(random);
             policyList.add(policy);
@@ -31,7 +32,7 @@ public class ProfileFacade {
         profile.setTopicPolicies(policyList);
     }
 
-    private static ProfileTopicPolicyModel getProfileTopicPolicyModel(Random random) {
+    private ProfileTopicPolicyModel getProfileTopicPolicyModel(Random random) {
         ProfileTopicPolicyModel policy = new ProfileTopicPolicyModel();
         policy.setPolicy(Integer.parseInt(RandomStringUtils.random(2, false, true)));
         policy.setBigDelay(Long.parseLong(RandomStringUtils.random(10, false, true)));
