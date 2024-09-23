@@ -1,6 +1,6 @@
 package ir.niopdc.policy.domain.fueltype;
 
-import ir.niopdc.policy.common.CsvConvertable;
+import ir.niopdc.common.CsvConvertable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;

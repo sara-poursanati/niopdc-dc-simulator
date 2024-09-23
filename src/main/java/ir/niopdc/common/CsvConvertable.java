@@ -1,4 +1,4 @@
-package ir.niopdc.policy.common;
+package ir.niopdc.common;
 
 @FunctionalInterface
 public interface CsvConvertable {
