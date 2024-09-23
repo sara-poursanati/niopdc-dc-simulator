@@ -1,4 +1,4 @@
-package ir.niopdc.policy.domain.fueltype;
+package ir.niopdc.policy.domain.fuel;
 
 import ir.niopdc.common.CsvConvertable;
 import jakarta.persistence.Entity;
@@ -7,7 +7,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "FUEL_TYPE_INFO")
-public class FuelTypeInfo implements CsvConvertable {
+public class Fuel implements CsvConvertable {
 
     @Id
     private String fuelType;

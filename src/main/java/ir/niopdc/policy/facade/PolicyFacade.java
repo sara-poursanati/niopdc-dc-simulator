@@ -1,6 +1,6 @@
 package ir.niopdc.policy.facade;
 
-import ir.niopdc.policy.domain.fueltype.FuelTypeInfoRepository;
+import ir.niopdc.policy.domain.fuel.FuelTypeRepository;
 import ir.niopdc.policy.dto.PolicyDto;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PolicyFacade {
-    private FuelTypeInfoRepository fuelTypeInfoRepository;
+    private FuelTypeRepository fuelTypeRepository;
 
     @Autowired
-    public void setFuelTypeInfoRepository(FuelTypeInfoRepository fuelTypeInfoRepository) {
-        this.fuelTypeInfoRepository = fuelTypeInfoRepository;
+    public void setFuelTypeInfoRepository(FuelTypeRepository fuelTypeRepository) {
+        this.fuelTypeRepository = fuelTypeRepository;
     }
 
     public PolicyDto getFuelTypePolicy() {
@@ -20,7 +20,7 @@ public class PolicyFacade {
         policyDto.setPolicyId(RandomStringUtils.random(3, true, true));
         policyDto.setVersion(RandomStringUtils.random(10, false, true));
         policyDto.setVersionName(RandomStringUtils.random(20, true, true));
-        policyDto.getCsvList().addAll(fuelTypeInfoRepository.findAll()
+        policyDto.getCsvList().addAll(fuelTypeRepository.findAll()
                 .stream()
                 .map(item -> item.convertToCsv(item))
                 .toList());
