@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @GrpcService
-public class ProfileService extends ProfileServiceGrpc.ProfileServiceImplBase {
+public class ProfileServer extends ProfileServiceGrpc.ProfileServiceImplBase {
 
     private ProfileFacade profileFacade;
 

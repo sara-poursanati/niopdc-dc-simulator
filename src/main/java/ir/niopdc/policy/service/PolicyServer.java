@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @GrpcService
-public class PolicyService extends PolicyServiceGrpc.PolicyServiceImplBase {
+public class PolicyServer extends PolicyServiceGrpc.PolicyServiceImplBase {
 
-    private static final Logger logger = LoggerFactory.getLogger(PolicyService.class);
+    private static final Logger logger = LoggerFactory.getLogger(PolicyServer.class);
 
     private PolicyFacade policyFacade;
 
