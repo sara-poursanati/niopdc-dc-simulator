@@ -14,7 +14,7 @@ public class BaseService <R extends ListCrudRepository<T, I>, T, I> {
     private R repository;
 
     @Autowired
-    public void setRepository(R repository) {
+    protected void setRepository(R repository) {
         this.repository = repository;
     }
 
