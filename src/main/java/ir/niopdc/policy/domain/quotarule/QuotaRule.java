@@ -1,5 +1,6 @@
 package ir.niopdc.policy.domain.quotarule;
 
+import ir.niopdc.common.CsvConvertable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -14,7 +15,7 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-public class QuotaRule {
+public class QuotaRule implements CsvConvertable {
 
     @EmbeddedId
     private QuotaRuleKey id;
@@ -29,4 +30,9 @@ public class QuotaRule {
     private Long x2;
     private Long x3;
     private Long rfu;
+
+    @Override
+    public String getCsvHeader() {
+        return "";
+    }
 }

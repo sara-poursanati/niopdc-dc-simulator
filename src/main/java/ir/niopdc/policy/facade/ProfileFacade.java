@@ -25,36 +25,52 @@ public class ProfileFacade {
     private void addPolicies(ProfileMessageModel profile) {
         List<ProfileTopicPolicyModel> policyList = new ArrayList<>();
 
-        for (int index =0; index < 5; index++) {
-            ProfileTopicPolicyModel policy = getProfileTopicPolicyModel(random);
-            policyList.add(policy);
-        }
+        //for (int index =0; index < 5; index++) {
+            ProfileTopicPolicyModel policy1 = getProfileTopicPolicyModel1(random);
+            policyList.add(policy1);
+        ProfileTopicPolicyModel policy2 = getProfileTopicPolicyModel2(random);
+        policyList.add(policy2);
+        //}
         profile.setTopicPolicies(policyList);
     }
 
-    private ProfileTopicPolicyModel getProfileTopicPolicyModel(Random random) {
+    private ProfileTopicPolicyModel getProfileTopicPolicyModel1(Random random) {
         ProfileTopicPolicyModel policy = new ProfileTopicPolicyModel();
-        policy.setPolicy(Integer.parseInt(RandomStringUtils.random(2, false, true)));
-        policy.setBigDelay(Long.parseLong(RandomStringUtils.random(10, false, true)));
-        policy.setQos(Byte.parseByte(RandomStringUtils.random(1, false, true)));
-        policy.setRetain(random.nextBoolean());
-        policy.setSlightDelay(Long.parseLong(RandomStringUtils.random(10, false, true)));
-        policy.setMaxBigDelayTryCount(Integer.parseInt(RandomStringUtils.random(5, false, true)));
-        policy.setMaxSlightDelayTryCount(Integer.parseInt(RandomStringUtils.random(5, false, true)));
-        policy.setPublishTopicTitle(RandomStringUtils.random(20, false, true));
-        policy.setSubscribeTopicTitle(RandomStringUtils.random(20, false, true));
+        policy.setPolicy(1);
+        policy.setBigDelay(10L);
+        policy.setQos(Byte.valueOf("2"));
+        policy.setRetain(false);
+        policy.setSlightDelay(13L);
+        policy.setMaxBigDelayTryCount(2);
+        policy.setMaxSlightDelayTryCount(4);
+        policy.setPublishTopicTitle("mg/pub/258/0/1");
+        policy.setSubscribeTopicTitle("qms/pub/258/0/1");
+        return policy;
+    }
+
+    private ProfileTopicPolicyModel getProfileTopicPolicyModel2(Random random) {
+        ProfileTopicPolicyModel policy = new ProfileTopicPolicyModel();
+        policy.setPolicy(4);
+        policy.setBigDelay(20L);
+        policy.setQos(Byte.valueOf("2"));
+        policy.setRetain(false);
+        policy.setSlightDelay(11L);
+        policy.setMaxBigDelayTryCount(2);
+        policy.setMaxSlightDelayTryCount(3);
+        policy.setPublishTopicTitle("mg/pub/258/0/4");
+        policy.setSubscribeTopicTitle("qms/pub/258/0/4");
         return policy;
     }
 
     private static ProfileMessageModel getProfileMessageModel(String gatewayId) {
         ProfileMessageModel profile = new ProfileMessageModel();
         profile.setTerminalId(gatewayId);
-        profile.setAddress(RandomStringUtils.random(100, true, true));
-        profile.setName(RandomStringUtils.random(50, true, true));
-        profile.setZoneId(RandomStringUtils.random(2, false, true));
-        profile.setAreaId(RandomStringUtils.random(3, false, true));
-        profile.setGsId(RandomStringUtils.random(4, false, true));
-        profile.setPtCount(Integer.parseInt(RandomStringUtils.random(2, false, true)));
+        profile.setAddress("تهران");
+        profile.setName("تهرانپارس");
+        profile.setZoneId("2552");
+        profile.setAreaId("12");
+        profile.setGsId("258");
+        profile.setPtCount(11);
         return profile;
     }
 }

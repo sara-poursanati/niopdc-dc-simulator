@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Entity
 @Table(name = "FUEL")
@@ -22,12 +23,7 @@ public class Fuel implements CsvConvertable {
     private String name;
 
     @Override
-    public String convertToCsv(Object value) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getId());
-        builder.append(",");
-        builder.append(getName());
-
-        return builder.toString();
+    public String getCsvHeader() {
+        return "";
     }
 }

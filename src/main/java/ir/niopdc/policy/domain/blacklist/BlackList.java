@@ -21,11 +21,11 @@ public class BlackList {
 
     @Id
     private String cardId;
-    @Column(name = "RELEASE_TIME")
-    private LocalDateTime releasedTime;
-    @Column(name = "ACTIVE_TIME")
-    private LocalDateTime activationTime;
-    @Column(name = "VER")
-    private int version;
-    private int reason;
+//    @Column(name = "RELEASE_TIME")
+//    private LocalDateTime releasedTime;
+//    @Column(name = "ACTIVE_TIME")
+//    private LocalDateTime activationTime;
+//    @Column(name = "VER")
+//    private int version;
+//    private int reason;
 }
