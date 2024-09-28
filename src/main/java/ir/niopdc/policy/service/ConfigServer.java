@@ -73,7 +73,22 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
     private void sendDataResponse(DataDto data, StreamObserver<CommonConfigResponse> responseObserver) {
         Path filePath = Path.of("D:\\work\\transmition\\mccsc\\black-list-sample.csv");
         log.info("Sending file started at {}", LocalDateTime.now());
-        try (Stream<String> stream = Files.lines(Paths.get(filePath.toUri()), StandardCharsets.UTF_8)) {
+//        try (Stream<String> stream = Files.lines(Paths.get(filePath.toUri()), StandardCharsets.UTF_8)) {
+//            Spliterator<String> split = stream.spliterator();
+//            int chunkSize = 10000;
+//
+//            while(true) {
+//                List<String> chunk = new ArrayList<>(chunkSize);
+//                for (int i = 0; i < chunkSize && split.tryAdvance(chunk::add); i++){
+//                }
+//                if (chunk.isEmpty()) break;
+//                String item = String.join("", chunk);
+//                responseObserver.onNext(CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build());
+//            }
+//        } catch (IOException e) {
+//            log.error(e.getMessage(), e);
+//        }
+        try (Stream<String> stream = data.getCsvList()) {
             Spliterator<String> split = stream.spliterator();
             int chunkSize = 10000;
 
@@ -85,8 +100,8 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
                 String item = String.join("", chunk);
                 responseObserver.onNext(CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build());
             }
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
+//        } catch (IOException e) {
+//            log.error(e.getMessage(), e);
         }
         log.info("Sending file ended at {}", LocalDateTime.now());
         responseObserver.onCompleted();
