@@ -19,8 +19,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @GrpcService
@@ -68,18 +71,24 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
     }
 
     private void sendDataResponse(DataDto data, StreamObserver<CommonConfigResponse> responseObserver) {
-//        data.getCsvList().forEach(item ->
-//            responseObserver.onNext(
-//                    CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build())
-//        );
-//        responseObserver.onCompleted();
         Path filePath = Path.of("D:\\work\\transmition\\mccsc\\black-list-sample.csv");
+        log.info("Sending file started at {}", LocalDateTime.now());
         try (Stream<String> stream = Files.lines(Paths.get(filePath.toUri()), StandardCharsets.UTF_8)) {
-            stream.forEach(item -> responseObserver.onNext(
-                    CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build()));
+            Spliterator<String> split = stream.spliterator();
+            int chunkSize = 10000;
+
+            while(true) {
+                List<String> chunk = new ArrayList<>(chunkSize);
+                for (int i = 0; i < chunkSize && split.tryAdvance(chunk::add); i++){
+                }
+                if (chunk.isEmpty()) break;
+                String item = String.join("", chunk);
+                responseObserver.onNext(CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build());
+            }
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }
+        log.info("Sending file ended at {}", LocalDateTime.now());
         responseObserver.onCompleted();
     }
 
