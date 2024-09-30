@@ -2,8 +2,6 @@ package ir.niopdc.policy.service;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
-import ir.niopdc.common.grpc.config.CommonConfigRequest;
-import ir.niopdc.common.grpc.config.CommonConfigResponse;
 import ir.niopdc.common.grpc.online.CommonOnlineRequest;
 import ir.niopdc.common.grpc.online.CommonOnlineResponse;
 import ir.niopdc.common.grpc.online.MGOnlineServiceGrpc;

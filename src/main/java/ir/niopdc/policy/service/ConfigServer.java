@@ -12,18 +12,17 @@ import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @GrpcService
@@ -32,6 +31,12 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
 
     private ProfileFacade profileFacade;
     private PolicyFacade policyFacade;
+
+    @Value("${app.chunkSize}")
+    private int chunkSize;
+
+    @Value("${app.blackList.path}")
+    private String blackListPath;
 
     @Autowired
     public void setProfileFacade(ProfileFacade profileFacade) {
@@ -71,40 +76,35 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
     }
 
     private void sendDataResponse(DataDto data, StreamObserver<CommonConfigResponse> responseObserver) {
-        Path filePath = Path.of("D:\\work\\transmition\\mccsc\\black-list-sample.csv");
+        Path filePath = Path.of(blackListPath);
         log.info("Sending file started at {}", LocalDateTime.now());
-//        try (Stream<String> stream = Files.lines(Paths.get(filePath.toUri()), StandardCharsets.UTF_8)) {
-//            Spliterator<String> split = stream.spliterator();
-//            int chunkSize = 10000;
-//
-//            while(true) {
-//                List<String> chunk = new ArrayList<>(chunkSize);
-//                for (int i = 0; i < chunkSize && split.tryAdvance(chunk::add); i++){
-//                }
-//                if (chunk.isEmpty()) break;
-//                String item = String.join("", chunk);
-//                responseObserver.onNext(CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build());
-//            }
-//        } catch (IOException e) {
-//            log.error(e.getMessage(), e);
-//        }
-        try (Stream<String> stream = data.getCsvList()) {
+        try (Stream<String> stream = Files.lines(filePath, StandardCharsets.UTF_8)) {
             Spliterator<String> split = stream.spliterator();
-            int chunkSize = 10000;
 
             while(true) {
-                List<String> chunk = new ArrayList<>(chunkSize);
-                for (int i = 0; i < chunkSize && split.tryAdvance(chunk::add); i++){
+                List<String> chunk = getChunk(split);
+                if (chunk.isEmpty()) {
+                    break;
                 }
-                if (chunk.isEmpty()) break;
                 String item = String.join("", chunk);
                 responseObserver.onNext(CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build());
             }
-//        } catch (IOException e) {
-//            log.error(e.getMessage(), e);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
         }
-        log.info("Sending file ended at {}", LocalDateTime.now());
+
         responseObserver.onCompleted();
+        log.info("Sending file ended at {}", LocalDateTime.now());
+    }
+
+    private List<String> getChunk(Spliterator<String> split) {
+        List<String> chunk = new ArrayList<>(chunkSize);
+        for (int index = 0; index < chunkSize; index++) {
+            if (!split.tryAdvance(chunk::add)) {
+                break;
+            }
+        }
+        return chunk;
     }
 
     private void sendProfileResponse(ProfileMessageModel profileMessageModel, StreamObserver<ProfileResponse> responseObserver) {
