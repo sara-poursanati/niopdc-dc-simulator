@@ -24,16 +24,15 @@ public class ProfileFacade {
     private void addPolicies(ProfileMessageModel profile) {
         List<ProfileTopicPolicyModel> policyList = new ArrayList<>();
 
-        //for (int index =0; index < 5; index++) {
-            ProfileTopicPolicyModel policy1 = getProfileTopicPolicyModel1(random);
-            policyList.add(policy1);
-        ProfileTopicPolicyModel policy2 = getProfileTopicPolicyModel2(random);
+        ProfileTopicPolicyModel policy1 = getProfileTopicPolicyModel1();
+        policyList.add(policy1);
+        ProfileTopicPolicyModel policy2 = getProfileTopicPolicyModel2();
         policyList.add(policy2);
-        //}
+
         profile.setTopicPolicies(policyList);
     }
 
-    private ProfileTopicPolicyModel getProfileTopicPolicyModel1(Random random) {
+    private ProfileTopicPolicyModel getProfileTopicPolicyModel1() {
         ProfileTopicPolicyModel policy = new ProfileTopicPolicyModel();
         policy.setPolicy(1);
         policy.setBigDelay(10L);
@@ -47,7 +46,7 @@ public class ProfileFacade {
         return policy;
     }
 
-    private ProfileTopicPolicyModel getProfileTopicPolicyModel2(Random random) {
+    private ProfileTopicPolicyModel getProfileTopicPolicyModel2() {
         ProfileTopicPolicyModel policy = new ProfileTopicPolicyModel();
         policy.setPolicy(4);
         policy.setBigDelay(20L);

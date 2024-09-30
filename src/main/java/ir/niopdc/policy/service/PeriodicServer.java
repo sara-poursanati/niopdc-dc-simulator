@@ -17,8 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 public class PeriodicServer extends MGOnlineServiceGrpc.MGOnlineServiceImplBase {
 
-    private static final Logger logger = LoggerFactory.getLogger(PeriodicServer.class);
-
     private PolicyFacade policyFacade;
 
     @Autowired
