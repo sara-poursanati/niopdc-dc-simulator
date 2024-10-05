@@ -1,7 +1,7 @@
 package ir.niopdc.policy.facade;
 
-import ir.niopdc.common.entity.ProfileMessageModel;
-import ir.niopdc.common.entity.ProfileTopicPolicyModel;
+import ir.niopdc.common.entity.ProfileMessageDto;
+import ir.niopdc.common.entity.ProfileTopicPolicyDto;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,27 +13,27 @@ public class ProfileFacade {
 
     private final Random random = new Random();
 
-    public ProfileMessageModel getProfile(String gatewayId) {
-        ProfileMessageModel profile = getProfileMessageModel(gatewayId);
+    public ProfileMessageDto getProfile(String gatewayId) {
+        ProfileMessageDto profile = getProfileMessageModel(gatewayId);
 
         addPolicies(profile);
 
         return profile;
     }
 
-    private void addPolicies(ProfileMessageModel profile) {
-        List<ProfileTopicPolicyModel> policyList = new ArrayList<>();
+    private void addPolicies(ProfileMessageDto profile) {
+        List<ProfileTopicPolicyDto> policyList = new ArrayList<>();
 
-        ProfileTopicPolicyModel policy1 = getProfileTopicPolicyModel1();
+        ProfileTopicPolicyDto policy1 = getProfileTopicPolicyModel1();
         policyList.add(policy1);
-        ProfileTopicPolicyModel policy2 = getProfileTopicPolicyModel2();
+        ProfileTopicPolicyDto policy2 = getProfileTopicPolicyModel2();
         policyList.add(policy2);
 
         profile.setTopicPolicies(policyList);
     }
 
-    private ProfileTopicPolicyModel getProfileTopicPolicyModel1() {
-        ProfileTopicPolicyModel policy = new ProfileTopicPolicyModel();
+    private ProfileTopicPolicyDto getProfileTopicPolicyModel1() {
+        ProfileTopicPolicyDto policy = new ProfileTopicPolicyDto();
         policy.setPolicy(1);
         policy.setBigDelay(10L);
         policy.setQos(Byte.valueOf("2"));
@@ -46,8 +46,8 @@ public class ProfileFacade {
         return policy;
     }
 
-    private ProfileTopicPolicyModel getProfileTopicPolicyModel2() {
-        ProfileTopicPolicyModel policy = new ProfileTopicPolicyModel();
+    private ProfileTopicPolicyDto getProfileTopicPolicyModel2() {
+        ProfileTopicPolicyDto policy = new ProfileTopicPolicyDto();
         policy.setPolicy(4);
         policy.setBigDelay(20L);
         policy.setQos(Byte.valueOf("2"));
@@ -60,8 +60,8 @@ public class ProfileFacade {
         return policy;
     }
 
-    private static ProfileMessageModel getProfileMessageModel(String gatewayId) {
-        ProfileMessageModel profile = new ProfileMessageModel();
+    private static ProfileMessageDto getProfileMessageModel(String gatewayId) {
+        ProfileMessageDto profile = new ProfileMessageDto();
         profile.setTerminalId(gatewayId);
         profile.setAddress("تهران");
         profile.setName("تهرانپارس");

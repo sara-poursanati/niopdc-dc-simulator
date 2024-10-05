@@ -1,12 +1,14 @@
 package ir.niopdc.policy.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
-import ir.niopdc.common.entity.ProfileMessageModel;
-import ir.niopdc.common.entity.ProfileTopicPolicyModel;
+import ir.niopdc.common.entity.ProfileMessageDto;
+import ir.niopdc.common.entity.ProfileTopicPolicyDto;
 import ir.niopdc.common.grpc.config.*;
 import ir.niopdc.policy.dto.DataDto;
-import ir.niopdc.policy.dto.PolicyDto;
+import ir.niopdc.policy.dto.PolicyMetadata;
+import ir.niopdc.policy.dto.PolicyResponse;
 import ir.niopdc.policy.facade.PolicyFacade;
 import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -49,15 +51,19 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
     @Override
     public void profile(ProfileRequest request, StreamObserver<ProfileResponse> responseObserver) {
         log.debug("A profile request received for gateway [{}]", request.getTerminalId());
-        ProfileMessageModel profileMessageModel = profileFacade.getProfile(request.getTerminalId());
+        ProfileMessageDto profileMessageModel = profileFacade.getProfile(request.getTerminalId());
         sendProfileResponse(profileMessageModel, responseObserver);
     }
     
     @Override
     public void rate(CommonConfigRequest request, StreamObserver<CommonConfigResponse> responseObserver) {
-        log.debug("A rate request received for gs [{}]", request.getGsId());
-        PolicyDto policy = policyFacade.getFuelTypePolicy();
-        sendPolicyResponse(policy, responseObserver);
+        try {
+            PolicyResponse response = policyFacade.getFuelRatePolicy();
+            sendJsonPolicyResponse(response, responseObserver);
+        } catch (JsonProcessingException exp) {
+            throw new IllegalStateException(exp);
+        }
+
     }
 
     @Override
@@ -67,7 +73,13 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
         sendDataResponse(dataDto, responseObserver);
     }
 
-    private void sendPolicyResponse(PolicyDto policy, StreamObserver<CommonConfigResponse> responseObserver) {
+    private void sendJsonPolicyResponse(PolicyResponse policy, StreamObserver<CommonConfigResponse> responseObserver) {
+        responseObserver.onNext(
+                CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(policy.getJsonContent())).build());
+        responseObserver.onCompleted();
+    }
+
+    private void sendPolicyResponse(PolicyMetadata policy, StreamObserver<CommonConfigResponse> responseObserver) {
         for (String value : policy.getCsvList()) {
             responseObserver.onNext(
                     CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(value)).build());
@@ -107,7 +119,7 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
         return chunk;
     }
 
-    private void sendProfileResponse(ProfileMessageModel profileMessageModel, StreamObserver<ProfileResponse> responseObserver) {
+    private void sendProfileResponse(ProfileMessageDto profileMessageModel, StreamObserver<ProfileResponse> responseObserver) {
         getProfileTopicPolicies(profileMessageModel);
 
 
@@ -116,7 +128,7 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    private ProfileResponse.Builder buildProfileResponse(ProfileMessageModel profileMessageModel) {
+    private ProfileResponse.Builder buildProfileResponse(ProfileMessageDto profileMessageModel) {
         ProfileResponse.Builder builder =  ProfileResponse.newBuilder();
         builder.setAddress(profileMessageModel.getAddress())
                 .setAreaId(profileMessageModel.getAreaId())
@@ -129,9 +141,9 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
         return builder;
     }
 
-    private List<ProfileTopicPolicy> getProfileTopicPolicies(ProfileMessageModel profileMessageModel) {
+    private List<ProfileTopicPolicy> getProfileTopicPolicies(ProfileMessageDto profileMessageModel) {
         List<ProfileTopicPolicy> profileTopicPolicies = new ArrayList<>();
-        for (ProfileTopicPolicyModel policyModel : profileMessageModel.getTopicPolicies()) {
+        for (ProfileTopicPolicyDto policyModel : profileMessageModel.getTopicPolicies()) {
             profileTopicPolicies.add(ProfileTopicPolicy
                     .newBuilder()
                     .setBigDelay(policyModel.getBigDelay())
