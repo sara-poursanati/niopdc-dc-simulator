@@ -21,10 +21,6 @@ public class GrayList {
 
     @Id
     private String cardId;
-    @Column(name = "RELEASE_TIME")
-    private LocalDateTime releasedTime;
-    @Column(name = "ACTIVE_TIME")
-    private LocalDateTime activationTime;
-    @Column(name = "VER")
+    private LocalDateTime type;
     private int reason;
 }

@@ -22,6 +22,9 @@ public class Policy {
     private Integer id;
     private String name;
     private LocalDateTime currentVersion;
+    private LocalDateTime latestVersion;
+    private LocalDateTime latestVersionActivationTime;
+
 
     private String publishTopicTitle;
     private String subscribeTopicTitle;

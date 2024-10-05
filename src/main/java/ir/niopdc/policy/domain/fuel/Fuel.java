@@ -1,6 +1,7 @@
 package ir.niopdc.policy.domain.fuel;
 
 import ir.niopdc.common.CsvConvertable;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -10,7 +11,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "FUEL")
+@Table(name = "FUEL_TYPE_INFO")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,8 +19,14 @@ import lombok.ToString;
 public class Fuel implements CsvConvertable {
 
     @Id
+    @Column(name = "FUEL_TYPE")
     private String id;
+    @Column(name = "FUEL_TYPE_NAME")
     private String name;
+    private Integer p;
+    private Integer p1;
+    private Integer p2;
+    private Integer p3;
 
     @Override
     public String getCsvHeader() {

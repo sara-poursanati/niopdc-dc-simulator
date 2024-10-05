@@ -9,7 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "MEDIA_GATEWAY")
+@Table(name = "media_gateway")
 @Getter
 @Setter
 @NoArgsConstructor
