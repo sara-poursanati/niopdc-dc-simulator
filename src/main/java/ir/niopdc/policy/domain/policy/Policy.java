@@ -21,10 +21,7 @@ public class Policy {
     @Id
     private Integer id;
     private String name;
-    private LocalDateTime currentVersion;
-    private LocalDateTime latestVersion;
-    private LocalDateTime latestVersionActivationTime;
-
+    private String currentVersion;
 
     private String publishTopicTitle;
     private String subscribeTopicTitle;
