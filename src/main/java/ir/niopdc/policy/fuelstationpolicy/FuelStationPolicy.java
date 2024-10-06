@@ -1,28 +1,21 @@
-package ir.niopdc.policy.domain.policy;
+package ir.niopdc.policy.fuelstationpolicy;
 
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "policy")
+@Table(name = "fuel_station_policy")
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString
-public class Policy {
+public class FuelStationPolicy {
 
-    @Id
-    private Integer id;
-    private String name;
-    private String currentVersion;
-
+    @EmbeddedId
+    private FuelStationPolicyKey id;
     private String publishTopicTitle;
     private String subscribeTopicTitle;
     private Long bigDelay;
