@@ -1,4 +1,4 @@
-package ir.niopdc.policy.fuelstationpolicy;
+package ir.niopdc.policy.domain.fuelstationpolicy;
 
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;

@@ -1,4 +1,4 @@
-package ir.niopdc.policy.fuelstationpolicy;
+package ir.niopdc.policy.domain.fuelstationpolicy;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
