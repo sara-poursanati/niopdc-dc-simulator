@@ -1,20 +1,19 @@
 package ir.niopdc.policy.facade;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.niopdc.common.entity.policy.FuelDto;
+import ir.niopdc.common.entity.policy.PolicyDto;
+import ir.niopdc.common.entity.policy.PolicyMetadata;
 import ir.niopdc.common.entity.policy.RateDto;
 import ir.niopdc.common.utils.CsvUtils;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
+import ir.niopdc.policy.domain.quotarule.QuotaRule;
 import ir.niopdc.policy.domain.quotarule.QuotaRuleService;
-import ir.niopdc.policy.dto.DataDto;
-import ir.niopdc.policy.dto.PolicyMetadata;
-import ir.niopdc.policy.dto.PolicyResponse;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,8 +29,7 @@ public class PolicyFacade {
     private FuelService fuelService;
     private QuotaRuleService quotaRuleService;
     private BlackListService blackListService;
-
-    private CsvUtils csvUtils;
+    private ObjectWriter objectWriter;
 
     @Autowired
     public void setFuelService(FuelService fuelService) {
@@ -49,63 +47,76 @@ public class PolicyFacade {
     }
 
     @Autowired
-    public void setCsvUtils(CsvUtils csvUtils) {this.csvUtils = csvUtils;}
+    public void setObjectWriter(ObjectWriter objectWriter) {
+        this.objectWriter = objectWriter;
+    }
 
-    public PolicyResponse getFuelRatePolicy() throws JsonProcessingException {
+    public PolicyDto getFuelRatePolicy() throws JsonProcessingException {
+        PolicyDto policy = new PolicyDto();
+
         PolicyMetadata metadata = getPolicyMetadata();
+        policy.setMetadata(metadata);
+
         List<Fuel> fuels = fuelService.findAll();
         List<FuelDto> fuelDtos = fuels.stream().map(PolicyFacade::generateFuelDto).toList();
+        String json = objectWriter.writeValueAsString(fuelDtos);
+        policy.setAddedListJson(json);
+
+        return  policy;
+    }
+
+    public PolicyDto getQuotaPolicy() throws JsonProcessingException {
+        PolicyDto policy = new PolicyDto();
+
+        PolicyMetadata metadata = getPolicyMetadata();
+        policy.setMetadata(metadata);
+
+        List<QuotaRule> quotaRules = quotaRuleService.findAll();
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String json = ow.writeValueAsString(fuelDtos);
+        String json = ow.writeValueAsString(quotaRules);
+        policy.setAddedListJson(json);
 
-        PolicyResponse response = new PolicyResponse();
-        response.setMetadata(metadata);
-        response.setJsonContent(json);
-        return  response;
+        return policy;
     }
 
-    public PolicyMetadata getQuotaPolicy() {
-        PolicyMetadata policyMetadata = getPolicyMetadata();
-        policyMetadata.getCsvList().addAll(quotaRuleService.findAll()
-                .stream()
-                .map(csvUtils::convertToCsv)
-                .toList());
-        return policyMetadata;
+    public PolicyDto getLocalQuotaPolicy() throws JsonProcessingException {
+        PolicyDto policy = new PolicyDto();
+
+        PolicyMetadata metadata = getPolicyMetadata();
+        policy.setMetadata(metadata);
+
+        List<QuotaRule> quotaRules = quotaRuleService.findAll();
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String json = ow.writeValueAsString(quotaRules);
+        policy.setAddedListJson(json);
+
+        return policy;
     }
 
-    public PolicyMetadata getLocalQuotaPolicy() {
-        PolicyMetadata policyMetadata = getPolicyMetadata();
-        policyMetadata.getCsvList().addAll(quotaRuleService.findAll()
-                .stream()
-                .map(csvUtils::convertToCsv)
-                .toList());
-        return policyMetadata;
-    }
+//    @Transactional(readOnly = true)
+//    public DataDto getBlackListPolicy() {
+//        DataDto dto = new DataDto();
+//        try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
+//            dto.setCsvList(blackListService.streamAll().map(csvUtils::convertToCsv));
+//        }
+//        return dto;
+//    }
 
-    @Transactional(readOnly = true)
-    public DataDto getBlackListPolicy() {
-        DataDto dto = new DataDto();
-        try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
-            dto.setCsvList(blackListService.streamAll().map(csvUtils::convertToCsv));
-        }
-        return dto;
-    }
-
-    public PolicyResponse getGrayListPolicy() {
+    public PolicyDto getGrayListPolicy() {
         return null;
     }
 
-    public PolicyResponse getCodingPolicy() {
+    public PolicyDto getCodingPolicy() {
         return null;
     }
 
-    public PolicyResponse getTerminalSoftware() {
+    public PolicyDto getTerminalSoftware() {
         return null;
     }
 
     private PolicyMetadata getPolicyMetadata() {
         PolicyMetadata policyMetadata = new PolicyMetadata();
-        policyMetadata.setPolicyId(RandomStringUtils.random(3, true, true));
+        policyMetadata.setPolicyId(Byte.parseByte(RandomStringUtils.random(3, false, true)));
         policyMetadata.setVersion(RandomStringUtils.random(10, false, true));
         policyMetadata.setVersionName(RandomStringUtils.random(20, true, true));
         return policyMetadata;
