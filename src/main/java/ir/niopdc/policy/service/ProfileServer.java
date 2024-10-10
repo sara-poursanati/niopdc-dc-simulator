@@ -3,7 +3,6 @@ package ir.niopdc.policy.service;
 import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.entity.ProfileMessageDto;
 import ir.niopdc.common.entity.ProfileTopicPolicyDto;
-import ir.niopdc.common.grpc.config.*;
 import ir.niopdc.common.grpc.profile.MGConfigServiceGrpc;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
@@ -22,15 +21,11 @@ import java.util.List;
 public class ProfileServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
 
     private ProfileFacade profileFacade;
-    private PolicyFacade policyFacade;
 
     @Autowired
     public void setProfileFacade(ProfileFacade profileFacade) {
         this.profileFacade = profileFacade;
     }
-
-    @Autowired
-    public void setPolicyFacade(PolicyFacade policyFacade) {this.policyFacade = policyFacade;}
 
     @Override
     public void profile(ProfileRequest request, StreamObserver<ProfileResponse> responseObserver) {
