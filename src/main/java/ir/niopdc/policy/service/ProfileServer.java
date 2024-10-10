@@ -1,7 +1,5 @@
 package ir.niopdc.policy.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.entity.ProfileMessageDto;
 import ir.niopdc.common.entity.ProfileTopicPolicyDto;
@@ -15,18 +13,9 @@ import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Spliterator;
-import java.util.stream.Stream;
 
 @GrpcService
 @Slf4j

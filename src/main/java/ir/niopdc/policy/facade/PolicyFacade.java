@@ -7,8 +7,6 @@ import ir.niopdc.common.entity.policy.FuelDto;
 import ir.niopdc.common.entity.policy.PolicyDto;
 import ir.niopdc.common.entity.policy.PolicyMetadata;
 import ir.niopdc.common.entity.policy.RateDto;
-import ir.niopdc.common.utils.CsvUtils;
-import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
@@ -17,12 +15,10 @@ import ir.niopdc.policy.domain.quotarule.QuotaRuleService;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @Service
 public class PolicyFacade {
