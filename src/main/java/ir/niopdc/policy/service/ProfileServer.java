@@ -9,6 +9,7 @@ import ir.niopdc.common.grpc.config.*;
 import ir.niopdc.common.grpc.profile.MGConfigServiceGrpc;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
+import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
 import ir.niopdc.policy.facade.PolicyFacade;
 import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -63,9 +64,9 @@ public class ProfileServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
         builder.setAddress(profileMessageModel.getAddress())
                 .setAreaId(profileMessageModel.getAreaId())
                 .setName(profileMessageModel.getName())
-                .setTerminalId(profileMessageModel.getTerminalId())
-                .setGsId(profileMessageModel.getGsId())
-                .setPtCount(profileMessageModel.getPtCount())
+                .setMediaGatewayId(profileMessageModel.getTerminalId())
+                .setFuelStationId(profileMessageModel.getGsId())
+                .setTerminalCount(profileMessageModel.getPtCount())
                 .setZoneId(profileMessageModel.getZoneId())
                 .addAllTopicPolicies(getProfileTopicPolicies(profileMessageModel));
         return builder;
