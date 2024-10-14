@@ -8,7 +8,6 @@ import ir.niopdc.common.grpc.profile.MGConfigServiceGrpc;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
 import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
-import ir.niopdc.policy.dto.DataDto;
 import ir.niopdc.policy.facade.PolicyFacade;
 import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
