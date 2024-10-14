@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "policy")
 @Getter
