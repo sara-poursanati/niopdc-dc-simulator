@@ -1,4 +1,4 @@
-package ir.niopdc.policy.domain.localquotarule;
+package ir.niopdc.policy.domain.regionalquotarule;
 
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-public class LocalQuotaRuleKey {
+public class RegionalQuotaRuleKey {
 
     private String vehicleCode;
     private String f;

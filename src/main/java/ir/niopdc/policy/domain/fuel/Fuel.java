@@ -1,35 +1,27 @@
 package ir.niopdc.policy.domain.fuel;
 
-import ir.niopdc.common.CsvConvertable;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import ir.niopdc.policy.domain.fuelrate.FuelRate;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.Set;
+
 @Entity
-@Table(name = "FUEL_TYPE_INFO")
+@Table(name = "FUEL")
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
-public class Fuel implements CsvConvertable {
+public class Fuel {
 
     @Id
-    @Column(name = "FUEL_TYPE")
-    private String id;
-    @Column(name = "FUEL_TYPE_NAME")
+    @Column(name = "id")
+    private Integer id;
+    @Column(name = "name")
     private String name;
-    private Integer p;
-    private Integer p1;
-    private Integer p2;
-    private Integer p3;
-
-    @Override
-    public String getCsvHeader() {
-        return "";
-    }
+    @OneToMany(mappedBy = "fuel")
+    private Set<FuelRate> rates;
 }

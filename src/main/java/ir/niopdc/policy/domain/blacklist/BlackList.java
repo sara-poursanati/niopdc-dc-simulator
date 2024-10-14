@@ -8,8 +8,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "INCB_LIST")
+@Table(name = "black_list")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,11 +20,5 @@ public class BlackList {
 
     @Id
     private String cardId;
-//    @Column(name = "RELEASE_TIME")
-//    private LocalDateTime releasedTime;
-//    @Column(name = "ACTIVE_TIME")
-//    private LocalDateTime activationTime;
-//    @Column(name = "VER")
-//    private int version;
-//    private int reason;
+    private LocalDateTime insertionDateTime;
 }

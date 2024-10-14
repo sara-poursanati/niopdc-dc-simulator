@@ -1,14 +1,14 @@
-package ir.niopdc.policy.service;
+package ir.niopdc.policy.grpc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.entity.ProfileMessageDto;
 import ir.niopdc.common.entity.ProfileTopicPolicyDto;
-import ir.niopdc.common.grpc.config.*;
+import ir.niopdc.common.grpc.profile.MGConfigServiceGrpc;
+import ir.niopdc.common.grpc.profile.ProfileRequest;
+import ir.niopdc.common.grpc.profile.ProfileResponse;
+import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
 import ir.niopdc.policy.dto.DataDto;
-import ir.niopdc.policy.dto.PolicyMetadata;
-import ir.niopdc.policy.dto.PolicyResponse;
 import ir.niopdc.policy.facade.PolicyFacade;
 import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 
 @GrpcService
 @Slf4j
-public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
+public class ProfileServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
 
     private ProfileFacade profileFacade;
     private PolicyFacade policyFacade;
@@ -50,74 +50,42 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
 
     @Override
     public void profile(ProfileRequest request, StreamObserver<ProfileResponse> responseObserver) {
-        log.debug("A profile request received for gateway [{}]", request.getTerminalId());
-        ProfileMessageDto profileMessageModel = profileFacade.getProfile(request.getTerminalId());
+        log.debug("A profile request received for gateway [{}]", request.getMediaGatewayId());
+        ProfileMessageDto profileMessageModel = profileFacade.getProfile(request.getMediaGatewayId());
         sendProfileResponse(profileMessageModel, responseObserver);
     }
-    
-    @Override
-    public void rate(CommonConfigRequest request, StreamObserver<CommonConfigResponse> responseObserver) {
-        try {
-            PolicyResponse response = policyFacade.getFuelRatePolicy();
-            sendJsonPolicyResponse(response, responseObserver);
-        } catch (JsonProcessingException exp) {
-            throw new IllegalStateException(exp);
-        }
 
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public void blackList(CommonConfigRequest request, StreamObserver<CommonConfigResponse> responseObserver) {
-        DataDto dataDto = policyFacade.getBlackListPolicy();
-        sendDataResponse(dataDto, responseObserver);
-    }
-
-    private void sendJsonPolicyResponse(PolicyResponse policy, StreamObserver<CommonConfigResponse> responseObserver) {
-        responseObserver.onNext(
-                CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(policy.getJsonContent())).build());
-        responseObserver.onCompleted();
-    }
-
-    private void sendPolicyResponse(PolicyMetadata policy, StreamObserver<CommonConfigResponse> responseObserver) {
-        for (String value : policy.getCsvList()) {
-            responseObserver.onNext(
-                    CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(value)).build());
-        }
-        responseObserver.onCompleted();
-    }
-
-    private void sendDataResponse(DataDto data, StreamObserver<CommonConfigResponse> responseObserver) {
-        Path filePath = Path.of(blackListPath);
-        log.info("Sending file started at {}", LocalDateTime.now());
-        try (Stream<String> stream = Files.lines(filePath, StandardCharsets.UTF_8)) {
-            Spliterator<String> split = stream.spliterator();
-
-            while(true) {
-                List<String> chunk = getChunk(split);
-                if (chunk.isEmpty()) {
-                    break;
-                }
-                String item = String.join("", chunk);
-                responseObserver.onNext(CommonConfigResponse.newBuilder().setChunkFile(ByteString.copyFromUtf8(item)).build());
-            }
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
-
-        responseObserver.onCompleted();
-        log.info("Sending file ended at {}", LocalDateTime.now());
-    }
-
-    private List<String> getChunk(Spliterator<String> split) {
-        List<String> chunk = new ArrayList<>(chunkSize);
-        for (int index = 0; index < chunkSize; index++) {
-            if (!split.tryAdvance(chunk::add)) {
-                break;
-            }
-        }
-        return chunk;
-    }
+//    private void sendDataResponse(DataDto data, StreamObserver<CommonConfigResponse> responseObserver) {
+//        Path filePath = Path.of(blackListPath);
+//        log.info("Sending file started at {}", LocalDateTime.now());
+//        try (Stream<String> stream = Files.lines(filePath, StandardCharsets.UTF_8)) {
+//            Spliterator<String> split = stream.spliterator();
+//
+//            while(true) {
+//                List<String> chunk = getChunk(split);
+//                if (chunk.isEmpty()) {
+//                    break;
+//                }
+//                String item = String.join("", chunk);
+//                responseObserver.onNext(CommonConfigResponse.newBuilder().setContent(ByteString.copyFromUtf8(item)).build());
+//            }
+//        } catch (IOException e) {
+//            log.error(e.getMessage(), e);
+//        }
+//
+//        responseObserver.onCompleted();
+//        log.info("Sending file ended at {}", LocalDateTime.now());
+//    }
+//
+//    private List<String> getChunk(Spliterator<String> split) {
+//        List<String> chunk = new ArrayList<>(chunkSize);
+//        for (int index = 0; index < chunkSize; index++) {
+//            if (!split.tryAdvance(chunk::add)) {
+//                break;
+//            }
+//        }
+//        return chunk;
+//    }
 
     private void sendProfileResponse(ProfileMessageDto profileMessageModel, StreamObserver<ProfileResponse> responseObserver) {
         getProfileTopicPolicies(profileMessageModel);
@@ -133,9 +101,9 @@ public class ConfigServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
         builder.setAddress(profileMessageModel.getAddress())
                 .setAreaId(profileMessageModel.getAreaId())
                 .setName(profileMessageModel.getName())
-                .setTerminalId(profileMessageModel.getTerminalId())
-                .setGsId(profileMessageModel.getGsId())
-                .setPtCount(profileMessageModel.getPtCount())
+                .setMediaGatewayId(profileMessageModel.getTerminalId())
+                .setFuelStationId(profileMessageModel.getGsId())
+                .setTerminalCount(profileMessageModel.getPtCount())
                 .setZoneId(profileMessageModel.getZoneId())
                 .addAllTopicPolicies(getProfileTopicPolicies(profileMessageModel));
         return builder;

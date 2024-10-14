@@ -4,5 +4,5 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PolicyRepository extends ListCrudRepository<Policy, Integer> {
+interface PolicyRepository extends ListCrudRepository<Policy, Integer> {
 }

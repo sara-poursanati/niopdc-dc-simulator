@@ -8,14 +8,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "coding")
+@Table(name = "coding_list")
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
-public class Coding {
+public class CodingList {
 
     @Id
     private String cardId;
+    private LocalDateTime insertionDateTime;
 }

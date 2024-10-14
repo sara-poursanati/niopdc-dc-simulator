@@ -4,5 +4,5 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface QuotaRuleRepository  extends ListCrudRepository<QuotaRule, QuotaRuleKey> {
+interface QuotaRuleRepository  extends ListCrudRepository<QuotaRule, QuotaRuleKey> {
 }

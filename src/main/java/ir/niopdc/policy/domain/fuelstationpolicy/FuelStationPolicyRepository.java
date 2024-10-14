@@ -4,5 +4,5 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FuelStationPolicyRepository extends ListCrudRepository<FuelStationPolicy, FuelStationPolicyKey> {
+interface FuelStationPolicyRepository extends ListCrudRepository<FuelStationPolicy, FuelStationPolicyKey> {
 }

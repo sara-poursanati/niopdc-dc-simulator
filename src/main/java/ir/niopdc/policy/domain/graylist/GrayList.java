@@ -23,4 +23,5 @@ public class GrayList {
     private String cardId;
     private LocalDateTime type;
     private int reason;
+    private LocalDateTime insertionDateTime;
 }

@@ -1,37 +1,34 @@
 package ir.niopdc.policy.facade;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import ir.niopdc.common.entity.policy.FuelDto;
-import ir.niopdc.common.entity.policy.RateDto;
-import ir.niopdc.common.utils.CsvUtils;
-import ir.niopdc.policy.domain.blacklist.BlackList;
+import ir.niopdc.common.entity.policy.*;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
+import ir.niopdc.policy.domain.fuelrate.FuelRate;
+import ir.niopdc.policy.domain.quotarule.QuotaRule;
 import ir.niopdc.policy.domain.quotarule.QuotaRuleService;
-import ir.niopdc.policy.dto.DataDto;
-import ir.niopdc.policy.dto.PolicyMetadata;
-import ir.niopdc.policy.dto.PolicyResponse;
+import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
+import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @Service
 public class PolicyFacade {
     private FuelService fuelService;
     private QuotaRuleService quotaRuleService;
+    private RegionalQuotaRuleService regionalQuotaRuleService;
     private BlackListService blackListService;
 
-    private CsvUtils csvUtils;
+    private ObjectWriter objectWriter;
 
     @Autowired
     public void setFuelService(FuelService fuelService) {
@@ -44,68 +41,84 @@ public class PolicyFacade {
     }
 
     @Autowired
+    public void setRegionalQuotaRuleService(RegionalQuotaRuleService regionalQuotaRuleService) {
+        this.regionalQuotaRuleService = regionalQuotaRuleService;
+    }
+
+    @Autowired
     public void setBlackListService(BlackListService blackListService) {
         this.blackListService = blackListService;
     }
 
     @Autowired
-    public void setCsvUtils(CsvUtils csvUtils) {this.csvUtils = csvUtils;}
+    public void setObjectWriter(ObjectWriter objectWriter) {
+        this.objectWriter = objectWriter;
+    }
 
-    public PolicyResponse getFuelRatePolicy() throws JsonProcessingException {
-        PolicyMetadata metadata = getPolicyMetadata();
+    @Transactional
+    public PolicyDto getFuelRatePolicy() throws JsonProcessingException {
+        PolicyDto response = new PolicyDto();
+
+        loadMetadata(response);
+
         List<Fuel> fuels = fuelService.findAll();
         List<FuelDto> fuelDtos = fuels.stream().map(PolicyFacade::generateFuelDto).toList();
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String json = ow.writeValueAsString(fuelDtos);
 
-        PolicyResponse response = new PolicyResponse();
-        response.setMetadata(metadata);
-        response.setJsonContent(json);
+        generateContent(fuelDtos, response);
+
         return  response;
     }
 
-    public PolicyMetadata getQuotaPolicy() {
-        PolicyMetadata policyMetadata = getPolicyMetadata();
-        policyMetadata.getCsvList().addAll(quotaRuleService.findAll()
-                .stream()
-                .map(csvUtils::convertToCsv)
-                .toList());
-        return policyMetadata;
+    public PolicyDto getNationalQuotaPolicy() throws JsonProcessingException {
+        PolicyDto response = new PolicyDto();
+
+        loadMetadata(response);
+
+        List<QuotaRule> quotaRules = quotaRuleService.findAll();
+        List<NationalQuotaRuleDto> quotaRuleDtos = quotaRules.stream().map(PolicyFacade::generateQuotaRuleDto).toList();
+
+        generateContent(quotaRuleDtos, response);
+
+        return  response;
+
     }
 
-    public PolicyMetadata getLocalQuotaPolicy() {
-        PolicyMetadata policyMetadata = getPolicyMetadata();
-        policyMetadata.getCsvList().addAll(quotaRuleService.findAll()
-                .stream()
-                .map(csvUtils::convertToCsv)
-                .toList());
-        return policyMetadata;
+    public PolicyDto getRegionalQuotaPolicy() throws JsonProcessingException {
+        PolicyDto response = new PolicyDto();
+
+        loadMetadata(response);
+
+        List<RegionalQuotaRule> quotaRules = regionalQuotaRuleService.findAll();
+        List<RegionalQuotaRuleDto> quotaRuleDtos = quotaRules.stream().map(PolicyFacade::generateRegionalQuotaRuleDto).toList();
+
+        generateContent(quotaRuleDtos, response);
+
+        return  response;
     }
 
-    @Transactional(readOnly = true)
-    public DataDto getBlackListPolicy() {
-        DataDto dto = new DataDto();
-        try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
-            dto.setCsvList(blackListService.streamAll().map(csvUtils::convertToCsv));
-        }
-        return dto;
-    }
-
-    public PolicyResponse getGrayListPolicy() {
-        return null;
-    }
-
-    public PolicyResponse getCodingPolicy() {
-        return null;
-    }
-
-    public PolicyResponse getTerminalSoftware() {
-        return null;
-    }
+//    public DataDto getBlackListPolicy() {
+//        DataDto dto = new DataDto();
+//        try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
+//            dto.setCsvList(blackListService.streamAll().map(csvUtils::convertToCsv));
+//        }
+//        return dto;
+//    }
+//
+//    public PolicyResponse getGrayListPolicy() {
+//        return null;
+//    }
+//
+//    public PolicyResponse getCodingPolicy() {
+//        return null;
+//    }
+//
+//    public PolicyResponse getTerminalSoftware() {
+//        return null;
+//    }
 
     private PolicyMetadata getPolicyMetadata() {
         PolicyMetadata policyMetadata = new PolicyMetadata();
-        policyMetadata.setPolicyId(RandomStringUtils.random(3, true, true));
+        policyMetadata.setPolicyId(Byte.parseByte(RandomStringUtils.random(2, false, true)));
         policyMetadata.setVersion(RandomStringUtils.random(10, false, true));
         policyMetadata.setVersionName(RandomStringUtils.random(20, true, true));
         return policyMetadata;
@@ -114,17 +127,45 @@ public class PolicyFacade {
     private static FuelDto generateFuelDto(Fuel fuel) {
         Objects.requireNonNull(fuel);
         FuelDto fuelDto = new FuelDto();
-        fuelDto.setFuelCode(fuel.getId());
+        fuelDto.setOperation(OperationEnum.INSERT);
+        fuelDto.setId(fuel.getId());
         fuelDto.setName(fuel.getName());
-        List<RateDto> rateDtos = new ArrayList<>();
-        RateDto rate1Dto = new RateDto(1, fuel.getP());
-        rateDtos.add(rate1Dto);
-        RateDto rate2Dto = new RateDto(2, fuel.getP1());
-        rateDtos.add(rate2Dto);
-        RateDto rate3Dto = new RateDto(3, fuel.getP2());
-        rateDtos.add(rate3Dto);
-        RateDto rate4Dto = new RateDto(4, fuel.getP3());
-        rateDtos.add(rate4Dto);
+        List<FuelRateDto> rateDtos = fuel.getRates().stream().map(PolicyFacade::generateRateDto).toList();
+        fuelDto.setRates(rateDtos);
         return fuelDto;
+    }
+
+    private static FuelRateDto generateRateDto(FuelRate fuelRate) {
+        Objects.requireNonNull(fuelRate);
+        FuelRateDto fuelRateDto = new FuelRateDto();
+        fuelRateDto.setOperation(OperationEnum.INSERT);
+        BeanUtils.copyProperties(fuelRate, fuelRateDto);
+        return fuelRateDto;
+    }
+
+    private static NationalQuotaRuleDto generateQuotaRuleDto(QuotaRule quotaRule) {
+        Objects.requireNonNull(quotaRule);
+        NationalQuotaRuleDto quotaRuleDto = new NationalQuotaRuleDto();
+        quotaRuleDto.setOperation(OperationEnum.INSERT);
+        BeanUtils.copyProperties(quotaRule, quotaRuleDto);
+        return quotaRuleDto;
+    }
+
+    private static RegionalQuotaRuleDto generateRegionalQuotaRuleDto(RegionalQuotaRule regionalQuotaRule) {
+        Objects.requireNonNull(regionalQuotaRule);
+        RegionalQuotaRuleDto regionalQuotaRuleDto = new RegionalQuotaRuleDto();
+        regionalQuotaRuleDto.setOperation(OperationEnum.INSERT);
+        BeanUtils.copyProperties(regionalQuotaRule, regionalQuotaRuleDto);
+        return regionalQuotaRuleDto;
+    }
+
+    private void generateContent(Object object, PolicyDto response) throws JsonProcessingException {
+        String json = objectWriter.writeValueAsString(object);
+        response.setJsonContent(json);
+    }
+
+    private void loadMetadata(PolicyDto response) {
+        PolicyMetadata metadata = getPolicyMetadata();
+        response.setMetadata(metadata);
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.stream.Stream;
 
 @Repository
-public interface BlackListRepository extends ListCrudRepository<BlackList, String> {
+interface BlackListRepository extends ListCrudRepository<BlackList, String> {
 
     @Query("select b from BlackList b")
     Stream<BlackList> streamAll();

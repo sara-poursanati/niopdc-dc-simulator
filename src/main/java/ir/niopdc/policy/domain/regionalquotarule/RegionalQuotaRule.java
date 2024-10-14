@@ -1,4 +1,4 @@
-package ir.niopdc.policy.domain.localquotarule;
+package ir.niopdc.policy.domain.regionalquotarule;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -9,15 +9,15 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "QUOTA_INFO")
+@Table(name = "regional_quota_rule")
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
-public class LocalQuotaRule {
+public class RegionalQuotaRule {
 
     @EmbeddedId
-    private LocalQuotaRuleKey id;
+    private RegionalQuotaRuleKey id;
     private Long a;
     private Long b;
     private Long d;
