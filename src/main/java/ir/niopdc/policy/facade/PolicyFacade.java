@@ -33,6 +33,9 @@ public class PolicyFacade {
     @Value("${app.terminalApp.path}")
     private String terminalAppPath;
 
+    @Value("${app.blackList.path}")
+    private String blackListPath;
+
     @Autowired
     public void setFuelService(FuelService fuelService) {
         this.fuelService = fuelService;
@@ -76,14 +79,16 @@ public class PolicyFacade {
         return GrpcUtils.generateRegionalQuotaResponse(metadata, regionalQuotaRules);
     }
 
-////    public DataDto getBlackListPolicy() {
-////        DataDto dto = new DataDto();
-////        try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
-////            dto.setCsvList(blackListService.streamAll().map(csvUtils::convertToCsv));
-////        }
-////        return dto;
-////    }
-////
+    public FilePolicyResponseDto getBlackListPolicy() {
+        PolicyMetadata metadata = loadMetadata();
+        Path filePath = Path.of(blackListPath);
+
+        FilePolicyResponseDto response = new FilePolicyResponseDto();
+        response.setMetadata(metadata);
+        response.setFile(filePath);
+        return response;
+    }
+
 ////    public PolicyResponse getGrayListPolicy() {
 ////        return null;
 ////    }

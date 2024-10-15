@@ -1,6 +1,7 @@
 package ir.niopdc.policy.grpc;
 
 import com.google.protobuf.ByteString;
+import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
 import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
@@ -10,6 +11,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -70,6 +72,33 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
             log.error(exp.getMessage(), exp);
             responseObserver.onError(exp);
         }
+    }
+
+    @Override
+    public void blackList(PolicyRequest request, StreamObserver<BlackListResponse> responseObserver) {
+        try {
+            FilePolicyResponseDto dto = policyFacade.getBlackListPolicy();
+            sendBlackList(responseObserver, dto);
+        } catch (Exception exp) {
+            log.error(exp.getMessage(), exp);
+            responseObserver.onError(exp);
+        }
+    }
+
+    private void sendBlackList(StreamObserver<BlackListResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
+        log.info("Sending file started at {}", LocalDateTime.now());
+
+        responseObserver.onNext(BlackListResponse.newBuilder().setMetadata(dto.getMetadata()).build());
+        try (Stream<String> stream = Files.lines(dto.getFile(), StandardCharsets.UTF_8)) {
+            stream.forEach(item -> {
+                BlackListMessage message = BlackListMessage.newBuilder()
+                        .setCardId(item)
+                        .setOperation(operationEnum.INSERT)
+                        .build();
+                responseObserver.onNext(BlackListResponse.newBuilder().addBlackListMessage(message).build());
+            });
+        }
+        log.info("Sending file ended at {}", LocalDateTime.now());
     }
 
     private static void sendBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
