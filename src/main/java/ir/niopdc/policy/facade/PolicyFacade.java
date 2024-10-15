@@ -2,6 +2,7 @@ package ir.niopdc.policy.facade;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import ir.niopdc.common.grpc.policy.FilePolicyResponse;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
@@ -9,12 +10,15 @@ import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
 import ir.niopdc.policy.domain.quotarule.QuotaRuleService;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
+import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Path;
 import java.util.List;
 
 @Service
@@ -25,6 +29,9 @@ public class PolicyFacade {
     private BlackListService blackListService;
 
     private ObjectWriter objectWriter;
+
+    @Value("${app.nationalQuota.path}")
+    private String nationalQuotaPath;
 
     @Autowired
     public void setFuelService(FuelService fuelService) {
@@ -52,26 +59,23 @@ public class PolicyFacade {
     }
 
     @Transactional
-    public RateResponse getFuelRatePolicy() throws JsonProcessingException {
+    public RateResponse getFuelRatePolicy() {
         PolicyMetadata metadata = loadMetadata();
         List<Fuel> fuels = fuelService.findAll();
         return GrpcUtils.generateRateRequest(metadata, fuels);
     }
 
-//    public PolicyDto getNationalQuotaPolicy() throws JsonProcessingException {
-//        PolicyDto response = new PolicyDto();
-//
-//        loadMetadata(response);
-//
-//        List<QuotaRule> quotaRules = quotaRuleService.findAll();
-//        List<NationalQuotaRuleDto> quotaRuleDtos = quotaRules.stream().map(PolicyFacade::generateQuotaRuleDto).toList();
-//
-//        generateContent(quotaRuleDtos, response);
-//
-//        return  response;
-//
-//    }
-//
+    public FilePolicyResponseDto getNationalQuotaPolicy() {
+        PolicyMetadata metadata = loadMetadata();
+        Path filePath = Path.of(nationalQuotaPath);
+
+        FilePolicyResponseDto response = new FilePolicyResponseDto();
+        response.setMetadata(metadata);
+        response.setFile(filePath);
+        return  response;
+
+    }
+
 //    public PolicyDto getRegionalQuotaPolicy() throws JsonProcessingException {
 //        PolicyDto response = new PolicyDto();
 //
