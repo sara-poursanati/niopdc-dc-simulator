@@ -2,10 +2,7 @@ package ir.niopdc.policy.grpc;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
-import ir.niopdc.common.grpc.policy.FilePolicyResponse;
-import ir.niopdc.common.grpc.policy.MGPolicyServiceGrpc;
-import ir.niopdc.common.grpc.policy.PolicyRequest;
-import ir.niopdc.common.grpc.policy.RateResponse;
+import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.facade.PolicyFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -63,18 +60,17 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         }
     }
 
-//    @Override
-//    public void regionalQuota(PolicyRequest request, StreamObserver<RegionalQuotaResponse> responseObserver) {
-//        try {
-//            PolicyDto policy = policyFacade.getRegionalQuotaPolicy();
-//            sendResponse(request, responseObserver, policy);
-//        } catch (Exception exp) {
-//            log.error(exp.getMessage(), exp);
-//            responseObserver.onError(exp);
-//        } finally {
-//            responseObserver.onCompleted();
-//        }
-//    }
+    @Override
+    public void regionalQuota(PolicyRequest request, StreamObserver<RegionalQuotaResponse> responseObserver) {
+        try {
+            RegionalQuotaResponse response = policyFacade.getRegionalQuotaPolicy();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception exp) {
+            log.error(exp.getMessage(), exp);
+            responseObserver.onError(exp);
+        }
+    }
 
     private static void sendBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
         log.info("Sending file started at {}", LocalDateTime.now());

@@ -13,6 +13,6 @@ import lombok.ToString;
 @ToString
 public class RegionalQuotaRuleKey {
 
-    private String vehicleCode;
-    private String f;
+    private String stationId;
+    private Integer catId;
 }

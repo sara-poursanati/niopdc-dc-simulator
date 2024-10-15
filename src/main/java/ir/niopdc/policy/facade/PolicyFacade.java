@@ -1,14 +1,13 @@
 package ir.niopdc.policy.facade;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import ir.niopdc.common.grpc.policy.FilePolicyResponse;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.RateResponse;
+import ir.niopdc.common.grpc.policy.RegionalQuotaResponse;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
 import ir.niopdc.policy.domain.quotarule.QuotaRuleService;
+import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
@@ -27,8 +26,6 @@ public class PolicyFacade {
     private QuotaRuleService quotaRuleService;
     private RegionalQuotaRuleService regionalQuotaRuleService;
     private BlackListService blackListService;
-
-    private ObjectWriter objectWriter;
 
     @Value("${app.nationalQuota.path}")
     private String nationalQuotaPath;
@@ -56,16 +53,11 @@ public class PolicyFacade {
         this.blackListService = blackListService;
     }
 
-    @Autowired
-    public void setObjectWriter(ObjectWriter objectWriter) {
-        this.objectWriter = objectWriter;
-    }
-
     @Transactional
     public RateResponse getFuelRatePolicy() {
         PolicyMetadata metadata = loadMetadata();
         List<Fuel> fuels = fuelService.findAll();
-        return GrpcUtils.generateRateRequest(metadata, fuels);
+        return GrpcUtils.generateRateResponse(metadata, fuels);
     }
 
     public FilePolicyResponseDto getNationalQuotaPolicy() {
@@ -78,19 +70,12 @@ public class PolicyFacade {
         return response;
     }
 
-//    public PolicyDto getRegionalQuotaPolicy() throws JsonProcessingException {
-//        PolicyDto response = new PolicyDto();
-//
-//        loadMetadata(response);
-//
-//        List<RegionalQuotaRule> quotaRules = regionalQuotaRuleService.findAll();
-//        List<RegionalQuotaRuleDto> quotaRuleDtos = quotaRules.stream().map(PolicyFacade::generateRegionalQuotaRuleDto).toList();
-//
-//        generateContent(quotaRuleDtos, response);
-//
-//        return  response;
-//    }
-//
+    public RegionalQuotaResponse getRegionalQuotaPolicy() {
+        PolicyMetadata metadata = loadMetadata();
+        List<RegionalQuotaRule> regionalQuotaRules = regionalQuotaRuleService.findAll();
+        return GrpcUtils.generateRegionalQuotaResponse(metadata, regionalQuotaRules);
+    }
+
 ////    public DataDto getBlackListPolicy() {
 ////        DataDto dto = new DataDto();
 ////        try (Stream<BlackList> blackListStream = blackListService.streamAll()) {

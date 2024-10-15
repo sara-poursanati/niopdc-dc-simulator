@@ -18,15 +18,17 @@ public class RegionalQuotaRule {
 
     @EmbeddedId
     private RegionalQuotaRuleKey id;
-    private Long a;
-    private Long b;
-    private Long d;
-    private Long t;
-    private Long v;
-    private Long w;
-    private Long q;
-    private Long x1;
-    private Long x2;
-    private Long x3;
-    private Long rfu;
+    private Long docId;
+    private Integer quotaId;
+    private Integer roleId;
+    private Integer cf0;
+    private Integer cf1;
+    private Integer cf2;
+    private Integer saving0;
+    private Integer saving1;
+    private Integer maxFuelCount;
+    private Integer limitOneDay;
+    private Integer limitOneTime;
+    private Integer limitOneDuration;
+    private Long duration;
 }
