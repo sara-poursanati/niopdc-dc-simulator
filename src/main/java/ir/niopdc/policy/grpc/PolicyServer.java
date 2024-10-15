@@ -1,11 +1,9 @@
 package ir.niopdc.policy.grpc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
-import ir.niopdc.common.entity.policy.PolicyDto;
-import ir.niopdc.common.grpc.policy.*;
+import ir.niopdc.common.grpc.policy.MGPolicyServiceGrpc;
+import ir.niopdc.common.grpc.policy.PolicyRequest;
+import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.policy.facade.PolicyFacade;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;

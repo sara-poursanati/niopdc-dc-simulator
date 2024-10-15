@@ -1,8 +1,8 @@
 package ir.niopdc.policy.utils;
 
+import ir.niopdc.common.grpc.policy.FuelDto;
 import ir.niopdc.common.grpc.policy.FuelRateDto;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
-import ir.niopdc.common.grpc.policy.FuelDto;
 import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;

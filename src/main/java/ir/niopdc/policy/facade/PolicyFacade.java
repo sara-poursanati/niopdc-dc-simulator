@@ -1,27 +1,21 @@
 package ir.niopdc.policy.facade;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
-import ir.niopdc.policy.domain.fuelrate.FuelRate;
-import ir.niopdc.policy.domain.quotarule.QuotaRule;
 import ir.niopdc.policy.domain.quotarule.QuotaRuleService;
-import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import ir.niopdc.policy.utils.GrpcUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class PolicyFacade {
