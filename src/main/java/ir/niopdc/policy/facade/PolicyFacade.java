@@ -33,6 +33,9 @@ public class PolicyFacade {
     @Value("${app.nationalQuota.path}")
     private String nationalQuotaPath;
 
+    @Value("${app.terminalApp.path}")
+    private String terminalAppPath;
+
     @Autowired
     public void setFuelService(FuelService fuelService) {
         this.fuelService = fuelService;
@@ -72,8 +75,7 @@ public class PolicyFacade {
         FilePolicyResponseDto response = new FilePolicyResponseDto();
         response.setMetadata(metadata);
         response.setFile(filePath);
-        return  response;
-
+        return response;
     }
 
 //    public PolicyDto getRegionalQuotaPolicy() throws JsonProcessingException {
@@ -105,9 +107,15 @@ public class PolicyFacade {
 ////        return null;
 ////    }
 ////
-////    public PolicyResponse getTerminalSoftware() {
-////        return null;
-////    }
+    public FilePolicyResponseDto getTerminalSoftware() {
+        PolicyMetadata metadata = loadMetadata();
+        Path filePath = Path.of(terminalAppPath);
+
+        FilePolicyResponseDto response = new FilePolicyResponseDto();
+        response.setMetadata(metadata);
+        response.setFile(filePath);
+        return response;
+    }
 //
 //    private PolicyMetadata getPolicyMetadata() {
 //        PolicyMetadata policyMetadata = new PolicyMetadata();
