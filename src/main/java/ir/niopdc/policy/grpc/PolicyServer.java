@@ -2,6 +2,7 @@ package ir.niopdc.policy.grpc;
 
 import com.google.protobuf.ByteString;
 import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
@@ -9,17 +10,24 @@ import ir.niopdc.policy.facade.PolicyFacade;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Spliterator;
 import java.util.stream.Stream;
 
 @GrpcService
 @Slf4j
 public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
+
+    @Value("${app.chunkSize}")
+    private int chunkSize;
 
     private PolicyFacade policyFacade;
 
@@ -75,7 +83,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     }
 
     @Override
-    public void blackList(PolicyRequest request, StreamObserver<BlackListResponse> responseObserver) {
+    public void blackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
         try {
             FilePolicyResponseDto dto = policyFacade.getBlackListPolicy();
             sendBlackList(responseObserver, dto);
@@ -85,20 +93,33 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         }
     }
 
-    private void sendBlackList(StreamObserver<BlackListResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
+    private void sendBlackList(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
         log.info("Sending file started at {}", LocalDateTime.now());
-
-        responseObserver.onNext(BlackListResponse.newBuilder().setMetadata(dto.getMetadata()).build());
+        responseObserver.onNext(FilePolicyResponse.newBuilder().setMetadata(dto.getMetadata()).build());
         try (Stream<String> stream = Files.lines(dto.getFile(), StandardCharsets.UTF_8)) {
-            stream.forEach(item -> {
-                BlackListMessage message = BlackListMessage.newBuilder()
-                        .setCardId(item)
-                        .setOperation(operationEnum.INSERT)
-                        .build();
-                responseObserver.onNext(BlackListResponse.newBuilder().addBlackListMessage(message).build());
-            });
+            Spliterator<String> split = stream.spliterator();
+
+            while (true) {
+                List<String> chunk = getChunk(split);
+                if (chunk.isEmpty()) {
+                    break;
+                }
+                String item = String.join("", chunk);
+                responseObserver.onNext(FilePolicyResponse.newBuilder().setFile(ByteString.copyFromUtf8(item)).build());
+            }
         }
+        responseObserver.onCompleted();
         log.info("Sending file ended at {}", LocalDateTime.now());
+    }
+
+    private List<String> getChunk(Spliterator<String> split) {
+        List<String> chunk = new ArrayList<>(chunkSize);
+        for (int index = 0; index < chunkSize; index++) {
+            if (!split.tryAdvance(chunk::add)) {
+                break;
+            }
+        }
+        return chunk;
     }
 
     private static void sendBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
