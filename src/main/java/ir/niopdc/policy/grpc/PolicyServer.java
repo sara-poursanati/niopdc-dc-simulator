@@ -1,8 +1,6 @@
 package ir.niopdc.policy.grpc;
 
 import com.google.protobuf.ByteString;
-import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
-import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
@@ -15,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
