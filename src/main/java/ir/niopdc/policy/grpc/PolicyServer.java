@@ -83,14 +83,25 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     public void blackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
         try {
             FilePolicyResponseDto dto = policyFacade.getBlackListPolicy();
-            sendBlackList(responseObserver, dto);
+            sendCsvFile(responseObserver, dto);
         } catch (Exception exp) {
             log.error(exp.getMessage(), exp);
             responseObserver.onError(exp);
         }
     }
 
-    private void sendBlackList(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
+    @Override
+    public void coding(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
+        try {
+            FilePolicyResponseDto dto = policyFacade.getCodingPolicy();
+            sendCsvFile(responseObserver, dto);
+        } catch (Exception exp) {
+            log.error(exp.getMessage(), exp);
+            responseObserver.onError(exp);
+        }
+    }
+
+    private void sendCsvFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
         log.info("Sending file started at {}", LocalDateTime.now());
         responseObserver.onNext(FilePolicyResponse.newBuilder().setMetadata(dto.getMetadata()).build());
         try (Stream<String> stream = Files.lines(dto.getFile(), StandardCharsets.UTF_8)) {

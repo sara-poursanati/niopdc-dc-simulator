@@ -36,6 +36,9 @@ public class PolicyFacade {
     @Value("${app.blackList.path}")
     private String blackListPath;
 
+    @Value("${app.codingList.path}")
+    private String codingListPath;
+
     @Autowired
     public void setFuelService(FuelService fuelService) {
         this.fuelService = fuelService;
@@ -67,10 +70,7 @@ public class PolicyFacade {
         PolicyMetadata metadata = loadMetadata();
         Path filePath = Path.of(nationalQuotaPath);
 
-        FilePolicyResponseDto response = new FilePolicyResponseDto();
-        response.setMetadata(metadata);
-        response.setFile(filePath);
-        return response;
+        return getFilePolicyResponseDto(metadata, filePath);
     }
 
     public RegionalQuotaResponse getRegionalQuotaPolicy() {
@@ -83,77 +83,22 @@ public class PolicyFacade {
         PolicyMetadata metadata = loadMetadata();
         Path filePath = Path.of(blackListPath);
 
-        FilePolicyResponseDto response = new FilePolicyResponseDto();
-        response.setMetadata(metadata);
-        response.setFile(filePath);
-        return response;
+        return getFilePolicyResponseDto(metadata, filePath);
     }
 
-////    public PolicyResponse getGrayListPolicy() {
-////        return null;
-////    }
-////
-////    public PolicyResponse getCodingPolicy() {
-////        return null;
-////    }
-////
+    public FilePolicyResponseDto getCodingPolicy() {
+        PolicyMetadata metadata = loadMetadata();
+        Path filePath = Path.of(codingListPath);
+
+        return getFilePolicyResponseDto(metadata, filePath);
+    }
+
     public FilePolicyResponseDto getTerminalSoftware() {
         PolicyMetadata metadata = loadMetadata();
         Path filePath = Path.of(terminalAppPath);
 
-        FilePolicyResponseDto response = new FilePolicyResponseDto();
-        response.setMetadata(metadata);
-        response.setFile(filePath);
-        return response;
+        return getFilePolicyResponseDto(metadata, filePath);
     }
-//
-//    private PolicyMetadata getPolicyMetadata() {
-//        PolicyMetadata policyMetadata = new PolicyMetadata();
-//        policyMetadata.setPolicyId(Byte.parseByte(RandomStringUtils.random(2, false, true)));
-//        policyMetadata.setVersion(RandomStringUtils.random(10, false, true));
-//        policyMetadata.setVersionName(RandomStringUtils.random(20, true, true));
-//        return policyMetadata;
-//    }
-//
-//    private static FuelDto generateFuelDto(Fuel fuel) {
-//        Objects.requireNonNull(fuel);
-//        FuelDto fuelDto = new FuelDto();
-//        fuelDto.setOperation(OperationEnum.INSERT);
-//        fuelDto.setId(fuel.getId());
-//        fuelDto.setName(fuel.getName());
-//        List<FuelRateDto> rateDtos = fuel.getRates().stream().map(PolicyFacade::generateRateDto).toList();
-//        fuelDto.setRates(rateDtos);
-//        return fuelDto;
-//    }
-//
-//    private static FuelRateDto generateRateDto(FuelRate fuelRate) {
-//        Objects.requireNonNull(fuelRate);
-//        FuelRateDto fuelRateDto = new FuelRateDto();
-//        fuelRateDto.setOperation(OperationEnum.INSERT);
-//        BeanUtils.copyProperties(fuelRate, fuelRateDto);
-//        return fuelRateDto;
-//    }
-//
-//    private static NationalQuotaRuleDto generateQuotaRuleDto(QuotaRule quotaRule) {
-//        Objects.requireNonNull(quotaRule);
-//        NationalQuotaRuleDto quotaRuleDto = new NationalQuotaRuleDto();
-//        quotaRuleDto.setOperation(OperationEnum.INSERT);
-//        BeanUtils.copyProperties(quotaRule, quotaRuleDto);
-//        return quotaRuleDto;
-//    }
-//
-//    private static RegionalQuotaRuleDto generateRegionalQuotaRuleDto(RegionalQuotaRule regionalQuotaRule) {
-//        Objects.requireNonNull(regionalQuotaRule);
-//        RegionalQuotaRuleDto regionalQuotaRuleDto = new RegionalQuotaRuleDto();
-//        regionalQuotaRuleDto.setOperation(OperationEnum.INSERT);
-//        BeanUtils.copyProperties(regionalQuotaRule, regionalQuotaRuleDto);
-//        return regionalQuotaRuleDto;
-//    }
-//
-//    private void generateContent(Object object, PolicyDto response) throws JsonProcessingException {
-//        String json = objectWriter.writeValueAsString(object);
-//        response.setJsonContent(json);
-//    }
 
     private PolicyMetadata loadMetadata() {
         PolicyMetadata.Builder metadata = PolicyMetadata.newBuilder()
@@ -161,5 +106,12 @@ public class PolicyFacade {
             .setVersion(RandomStringUtils.random(10, false, true))
             .setVersionName(RandomStringUtils.random(20, true, true));
         return metadata.build();
+    }
+
+    private static FilePolicyResponseDto getFilePolicyResponseDto(PolicyMetadata metadata, Path filePath) {
+        FilePolicyResponseDto response = new FilePolicyResponseDto();
+        response.setMetadata(metadata);
+        response.setFile(filePath);
+        return response;
     }
 }
