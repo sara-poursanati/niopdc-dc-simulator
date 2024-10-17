@@ -101,9 +101,19 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         }
     }
 
+    @Override
+    public void grayList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
+        try {
+            FilePolicyResponseDto dto = policyFacade.getCodingPolicy();
+            sendCsvFile(responseObserver, dto);
+        } catch (Exception exp) {
+            log.error(exp.getMessage(), exp);
+            responseObserver.onError(exp);
+        }
+    }
+
     private void sendCsvFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
         log.info("Sending file started at {}", LocalDateTime.now());
-        responseObserver.onNext(FilePolicyResponse.newBuilder().setMetadata(dto.getMetadata()).build());
         try (Stream<String> stream = Files.lines(dto.getFile(), StandardCharsets.UTF_8)) {
             Spliterator<String> split = stream.spliterator();
 
@@ -113,6 +123,9 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
                     break;
                 }
                 String item = String.join("", chunk);
+                responseObserver.onNext(FilePolicyResponse.newBuilder()
+                        .setFile(ByteString.copyFromUtf8(item))
+                        .setMetadata(dto.getMetadata()).build());
                 responseObserver.onNext(FilePolicyResponse.newBuilder().setFile(ByteString.copyFromUtf8(item)).build());
             }
         }
