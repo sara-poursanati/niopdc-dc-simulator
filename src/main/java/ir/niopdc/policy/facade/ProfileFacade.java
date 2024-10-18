@@ -2,6 +2,12 @@ package ir.niopdc.policy.facade;
 
 import ir.niopdc.common.entity.ProfileMessageDto;
 import ir.niopdc.common.entity.ProfileTopicPolicyDto;
+import ir.niopdc.policy.domain.fuelstation.FuelStation;
+import ir.niopdc.policy.domain.fuelstation.FuelStationService;
+import ir.niopdc.policy.domain.fuelterminal.FuelTerminal;
+import ir.niopdc.policy.domain.mediagateway.MediaGateway;
+import ir.niopdc.policy.domain.mediagateway.MediaGatewayService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -11,6 +17,10 @@ import java.util.Random;
 @Service
 public class ProfileFacade {
 
+    @Autowired
+    private MediaGatewayService mediaGatewayService;
+    @Autowired
+    private FuelStationService fuelStationService;
     private final Random random = new Random();
 
     public ProfileMessageDto getProfile(String gatewayId) {
@@ -60,15 +70,26 @@ public class ProfileFacade {
         return policy;
     }
 
-    private static ProfileMessageDto getProfileMessageModel(String gatewayId) {
-        ProfileMessageDto profile = new ProfileMessageDto();
-        profile.setTerminalId(gatewayId);
-        profile.setAddress("تهران");
-        profile.setName("تهرانپارس");
-        profile.setZoneId("2552");
-        profile.setAreaId("12");
-        profile.setGsId("258");
-        profile.setPtCount(11);
-        return profile;
+    private ProfileMessageDto getProfileMessageModel(String gatewayId) {
+        System.out.println("before");
+        MediaGateway mediaGateway = mediaGatewayService.findById(gatewayId);
+        if (mediaGateway == null) {
+            return null;
+        }
+        System.out.println("after");
+        return getProfileMessageDto(mediaGateway);
+    }
+
+    private ProfileMessageDto getProfileMessageDto(MediaGateway mediaGateway) {
+        FuelStation theFuelStation = fuelStationService.getFuelStationByMediaGateway(mediaGateway);
+        ProfileMessageDto theProfile = new ProfileMessageDto();
+        theProfile.setTerminalId(mediaGateway.getSerialNumber());
+        theProfile.setAddress(theFuelStation.getAddress());
+        theProfile.setName(theFuelStation.getName());
+        theProfile.setZoneId(theFuelStation.getZoneId());
+        theProfile.setAreaId(theFuelStation.getAreaId());
+        theProfile.setGsId(theFuelStation.getId());
+        theProfile.setPtCount(theFuelStation.getFuelTerminals().size());
+        return theProfile;
     }
 }
