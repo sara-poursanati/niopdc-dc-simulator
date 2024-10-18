@@ -1,5 +1,7 @@
 package ir.niopdc.policy.facade;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import ir.niopdc.common.entity.ProfileMessageDto;
 import ir.niopdc.common.entity.ProfileTopicPolicyDto;
 import ir.niopdc.policy.domain.fuelstation.FuelStation;
@@ -71,12 +73,10 @@ public class ProfileFacade {
     }
 
     private ProfileMessageDto getProfileMessageModel(String gatewayId) {
-        System.out.println("before");
         MediaGateway mediaGateway = mediaGatewayService.findById(gatewayId);
         if (mediaGateway == null) {
-            return null;
+            throw new StatusRuntimeException(Status.NOT_FOUND.withDescription("The media gateway not found."));
         }
-        System.out.println("after");
         return getProfileMessageDto(mediaGateway);
     }
 
