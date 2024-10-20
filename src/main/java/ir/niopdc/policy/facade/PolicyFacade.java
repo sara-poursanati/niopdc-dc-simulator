@@ -7,6 +7,8 @@ import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.common.grpc.policy.RegionalQuotaResponse;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
+import ir.niopdc.policy.domain.fuelrate.FuelRate;
+import ir.niopdc.policy.domain.fuelrate.FuelRateService;
 import ir.niopdc.policy.domain.policy.Policy;
 import ir.niopdc.policy.domain.policy.PolicyService;
 import ir.niopdc.policy.domain.policyversion.PolicyVersion;
@@ -27,9 +29,6 @@ import java.util.Objects;
 
 @Service
 public class PolicyFacade {
-    private FuelService fuelService;
-    private RegionalQuotaRuleService regionalQuotaRuleService;
-    private PolicyService policyService;
 
     @Value("${app.nationalQuota.path}")
     private String nationalQuotaPath;
@@ -45,7 +44,12 @@ public class PolicyFacade {
 
     @Value("${app.grayList.path}")
     private String grayListPath;
+
+    private FuelService fuelService;
+    private RegionalQuotaRuleService regionalQuotaRuleService;
+    private PolicyService policyService;
     private PolicyVersionService policyVersionService;
+    private FuelRateService fuelRateService;
 
     @Autowired
     public void setFuelService(FuelService fuelService) {
@@ -62,12 +66,23 @@ public class PolicyFacade {
         this.policyService = policyService;
     }
 
+    @Autowired
+    public void setPolicyVersionService(PolicyVersionService policyVersionService) {
+        this.policyVersionService = policyVersionService;
+    }
+
+    @Autowired
+    public void setFuelRateService(FuelRateService fuelRateService) {
+        this.fuelRateService = fuelRateService;
+    }
+
 
     @Transactional
     public RateResponse getFuelRatePolicy(PolicyRequest request) {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.RATE, request.getVersion());
         List<Fuel> fuels = fuelService.findAll();
-        return GrpcUtils.generateRateResponse(metadata, fuels);
+        List<FuelRate> fuelRates = fuelRateService.findByVersion(metadata.getVersion());
+        return GrpcUtils.generateRateResponse(metadata, fuels, fuelRates);
     }
 
     public FilePolicyResponseDto getNationalQuotaPolicy() {
@@ -121,7 +136,7 @@ public class PolicyFacade {
             PolicyVersion policyVersion = policyVersionService.findById(key);
             return loadMetadata(policyVersion);
         }
-        return null;
+        return PolicyMetadata.newBuilder().build();
     }
 
     private PolicyMetadata loadMetadata(PolicyVersion policyVersion) {
@@ -139,10 +154,5 @@ public class PolicyFacade {
         response.setMetadata(metadata);
         response.setFile(filePath);
         return response;
-    }
-
-    @Autowired
-    public void setPolicyVersionService(PolicyVersionService policyVersionService) {
-        this.policyVersionService = policyVersionService;
     }
 }

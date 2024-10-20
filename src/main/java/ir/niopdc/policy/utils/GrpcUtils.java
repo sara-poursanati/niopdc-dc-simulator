@@ -7,21 +7,21 @@ import ir.niopdc.policy.domain.fuelrate.FuelRate;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class GrpcUtils {
 
     private GrpcUtils() {
     }
 
-    public static RateResponse generateRateResponse(PolicyMetadata metadata, List<Fuel> fuels) {
+    public static RateResponse generateRateResponse(PolicyMetadata metadata, List<Fuel> fuels, List<FuelRate> fuelRates) {
         RateResponse.Builder builder = RateResponse.newBuilder();
         builder.setMetadata(metadata)
-                .addAllFuels(getFuelDtos(fuels));
+                .addAllFuels(getFuelDtos(fuels, fuelRates));
         return builder.build();
     }
 
@@ -58,23 +58,27 @@ public class GrpcUtils {
         return result;
     }
 
-    private static Iterable<FuelMessage> getFuelDtos(List<Fuel> fuels) {
+    private static Iterable<FuelMessage> getFuelDtos(List<Fuel> fuels, List<FuelRate> fuelRates) {
         List<FuelMessage> result = new ArrayList<>();
+        Map<Integer, List<FuelRate>> rateMap = fuelRates.stream().collect(Collectors.groupingBy(FuelRate::getFuelId));
         for (Fuel fuel : fuels) {
             FuelMessage fuelMessage = FuelMessage.newBuilder()
                     .setCode(fuel.getId())
                     .setName(fuel.getName())
                     .setOperation(operationEnum.INSERT)
-                    .addAllRates(getFuelRateDtos(fuel))
+                    .addAllRates(getFuelRateDtos(rateMap.get(fuel.getId())))
                     .build();
             result.add(fuelMessage);
         }
         return result;
     }
 
-    private static Iterable<FuelRateMessage> getFuelRateDtos(Fuel fuel) {
+    private static Iterable<FuelRateMessage> getFuelRateDtos(List<FuelRate> rates) {
         List<FuelRateMessage> result = new ArrayList<>();
-        for (FuelRate rate : fuel.getRates()) {
+        if (rates == null || rates.isEmpty()) {
+            return result;
+        }
+        for (FuelRate rate : rates) {
             FuelRateMessage fuelRateDto = FuelRateMessage.newBuilder()
                     .setRateNumber(rate.getRateNumber())
                     .setRateValue(rate.getRateValue())

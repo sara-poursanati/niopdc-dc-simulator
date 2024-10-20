@@ -36,7 +36,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     public void rate(PolicyRequest request, StreamObserver<RateResponse> responseObserver) {
         try {
-            RateResponse response = policyFacade.getFuelRatePolicy();
+            RateResponse response = policyFacade.getFuelRatePolicy(request);
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception exp) {
