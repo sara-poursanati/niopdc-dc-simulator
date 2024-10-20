@@ -1,10 +1,15 @@
 package ir.niopdc.policy.utils;
 
+import com.google.protobuf.Timestamp;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,6 +83,15 @@ public class GrpcUtils {
             result.add(fuelRateDto);
         }
         return result;
+    }
+
+    public static Timestamp convertToGoogleTimestamp(ZonedDateTime dateTime) {
+        Instant instant = dateTime.toInstant();
+
+        return Timestamp.newBuilder()
+                .setSeconds(instant.getEpochSecond())
+                .setNanos(instant.getNano())
+                .build();
     }
 
 }

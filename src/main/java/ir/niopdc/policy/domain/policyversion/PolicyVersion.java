@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "policy_version")
@@ -19,7 +20,7 @@ public class PolicyVersion {
     @EmbeddedId
     PolicyVersionKey id;
     private String versionName;
-    private LocalDateTime releaseTime;
-    private LocalDateTime activationTime;
+    private ZonedDateTime releaseTime;
+    private ZonedDateTime activationTime;
 
 }

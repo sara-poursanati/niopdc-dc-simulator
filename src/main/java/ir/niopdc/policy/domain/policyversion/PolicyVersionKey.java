@@ -10,6 +10,6 @@ import lombok.ToString;
 @Setter
 @ToString
 public class PolicyVersionKey {
-    private Integer policyId;
+    private Byte policyId;
     private String version;
 }
