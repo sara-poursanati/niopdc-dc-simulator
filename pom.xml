@@ -10,9 +10,9 @@
 	</parent>
 
 	<groupId>ir.niopdc</groupId>
-	<artifactId>policy-packager</artifactId>
+	<artifactId>niopdc-data-provider</artifactId>
 	<version>1403.06.24</version>
-	<name>policy-packager</name>
+	<name>Niopdc data provider</name>
 	<description>Packages the policies and delivers them to the sender agent</description>
 
 	<properties>
