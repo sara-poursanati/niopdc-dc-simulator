@@ -1,6 +1,7 @@
 package ir.niopdc.policy.utils;
 
 import com.google.protobuf.Timestamp;
+import ir.niopdc.common.entity.policy.OperationEnum;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;
@@ -51,7 +52,7 @@ public class GrpcUtils {
                     .setSaving1(rule.getSaving1())
                     .setMaxFuelCount(rule.getMaxFuelCount())
                     .setDuration(rule.getDuration())
-                    .setOperation(operationEnum.INSERT)
+                    .setOperation(OperationEnumMessage.INSERT)
                     .build();
             result.add(regionalQuotaMessage);
         }
@@ -65,7 +66,7 @@ public class GrpcUtils {
             FuelMessage fuelMessage = FuelMessage.newBuilder()
                     .setCode(fuel.getId())
                     .setName(fuel.getName())
-                    .setOperation(operationEnum.INSERT)
+                    .setOperation(OperationEnumMessage.INSERT)
                     .addAllRates(getFuelRateDtos(rateMap.get(fuel.getId())))
                     .build();
             result.add(fuelMessage);
