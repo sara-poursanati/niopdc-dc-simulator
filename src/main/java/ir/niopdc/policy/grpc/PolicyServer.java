@@ -70,7 +70,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     public void regionalQuota(PolicyRequest request, StreamObserver<RegionalQuotaResponse> responseObserver) {
         try {
-            RegionalQuotaResponse response = policyFacade.getRegionalQuotaPolicy();
+            RegionalQuotaResponse response = policyFacade.getRegionalQuotaPolicy(request);
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception exp) {
@@ -145,11 +145,14 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
 
     private static void sendBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
         log.info("Sending file started at {}", LocalDateTime.now());
-        byte[] bytes = Files.readAllBytes(dto.getFile());
 
         FilePolicyResponse.Builder builder = FilePolicyResponse.newBuilder()
-                .setMetadata(dto.getMetadata())
-                .setFile(ByteString.copyFrom(bytes));
+                .setMetadata(dto.getMetadata());
+        if (dto.getFile() != null) {
+            byte[] bytes = Files.readAllBytes(dto.getFile());
+            builder.setFile(ByteString.copyFrom(bytes));
+        }
+
         responseObserver.onNext(builder.build());
 
         responseObserver.onCompleted();
