@@ -26,11 +26,22 @@ public class GrpcUtils {
         return builder.build();
     }
 
+    public static RateResponse generateRateResponse(PolicyMetadata metadata) {
+        RateResponse.Builder builder = RateResponse.newBuilder();
+        builder.setMetadata(metadata);
+        return builder.build();
+    }
+
     public static RegionalQuotaResponse generateRegionalQuotaResponse(PolicyMetadata metadata, List<RegionalQuotaRule> regionalQuotaRules) {
         RegionalQuotaResponse.Builder builder = RegionalQuotaResponse.newBuilder();
         builder.setMetadata(metadata)
                 .addAllRegionalQuotas(getRegionalQuotaDts(regionalQuotaRules));
         return builder.build();
+    }
+
+    public static RegionalQuotaResponse generateRegionalQuotaResponse(PolicyMetadata metadata) {
+        RegionalQuotaResponse.Builder builder = RegionalQuotaResponse.newBuilder();
+        return builder.setMetadata(metadata).build();
     }
 
     private static Iterable<RegionalQuotaMessage> getRegionalQuotaDts(List<RegionalQuotaRule> regionalQuotaRules) {
@@ -98,5 +109,4 @@ public class GrpcUtils {
                 .setNanos(instant.getNano())
                 .build();
     }
-
 }
