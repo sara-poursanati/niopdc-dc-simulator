@@ -119,8 +119,8 @@ public class PolicyFacade {
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
-    public FilePolicyResponseDto getTerminalSoftware() {
-        PolicyMetadata metadata = loadMetadata(new PolicyVersion());
+    public FilePolicyResponseDto getTerminalSoftware(PolicyRequest request) {
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.APP, request.getVersion());
         Path filePath = Path.of(terminalAppPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
