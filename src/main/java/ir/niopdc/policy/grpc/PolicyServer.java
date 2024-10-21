@@ -59,7 +59,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     public void terminalApp(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
         try {
-            FilePolicyResponseDto dto = policyFacade.getTerminalSoftware();
+            FilePolicyResponseDto dto = policyFacade.getTerminalSoftware(request);
             sendBinaryFile(responseObserver, dto);
         } catch (Exception exp) {
             log.error(exp.getMessage(), exp);
