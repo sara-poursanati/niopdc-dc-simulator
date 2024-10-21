@@ -80,7 +80,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     @SneakyThrows
     public void grayList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        FilePolicyResponseDto dto = policyFacade.getCodingPolicy();
+        FilePolicyResponseDto dto = policyFacade.getGrayListPolicy();
         sendCsvFile(responseObserver, dto);
     }
 
