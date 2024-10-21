@@ -129,7 +129,7 @@ public class PolicyFacade {
     private PolicyMetadata loadMetadataByVersion(PolicyEnum policyEnum, String version) {
         Policy policy = policyService.findById(policyEnum.getValue());
         Objects.requireNonNull(policy, String.format("Policy not found for %s", policyEnum));
-        if (!version.equals(policy.getCurrentVersion())) {
+        if (isNotUpdated(version, policy)) {
             PolicyVersionKey key = new PolicyVersionKey();
             key.setPolicyId(policy.getId());
             key.setVersion(policy.getCurrentVersion());
@@ -137,6 +137,10 @@ public class PolicyFacade {
             return loadMetadata(policyVersion);
         }
         return PolicyMetadata.newBuilder().build();
+    }
+
+    private static boolean isNotUpdated(String version, Policy policy) {
+        return (version == null) || (!version.equals(policy.getCurrentVersion()));
     }
 
     private PolicyMetadata loadMetadata(PolicyVersion policyVersion) {
