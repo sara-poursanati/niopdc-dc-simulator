@@ -5,6 +5,7 @@ import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.facade.PolicyFacade;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,81 +36,52 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
 
     @Override
     public void rate(PolicyRequest request, StreamObserver<RateResponse> responseObserver) {
-        try {
-            RateResponse response = policyFacade.getFuelRatePolicy(request);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exp) {
-            log.error(exp.getMessage(), exp);
-            responseObserver.onError(exp);
-        }
+        RateResponse response = policyFacade.getFuelRatePolicy(request);
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
+    @SneakyThrows
     public void nationalQuota(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        try {
-            FilePolicyResponseDto dto = policyFacade.getNationalQuotaPolicy(request);
-            sendBinaryFile(responseObserver, dto);
-        } catch (Exception exp) {
-            log.error(exp.getMessage(), exp);
-            responseObserver.onError(exp);
-        }
+        FilePolicyResponseDto dto = policyFacade.getNationalQuotaPolicy(request);
+        sendBinaryFile(responseObserver, dto);
     }
 
+
     @Override
+    @SneakyThrows
     public void terminalApp(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        try {
-            FilePolicyResponseDto dto = policyFacade.getTerminalSoftware(request);
-            sendBinaryFile(responseObserver, dto);
-        } catch (Exception exp) {
-            log.error(exp.getMessage(), exp);
-            responseObserver.onError(exp);
-        }
+        FilePolicyResponseDto dto = policyFacade.getTerminalSoftware(request);
+        sendBinaryFile(responseObserver, dto);
     }
 
     @Override
     public void regionalQuota(PolicyRequest request, StreamObserver<RegionalQuotaResponse> responseObserver) {
-        try {
-            RegionalQuotaResponse response = policyFacade.getRegionalQuotaPolicy(request);
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exp) {
-            log.error(exp.getMessage(), exp);
-            responseObserver.onError(exp);
-        }
+        RegionalQuotaResponse response = policyFacade.getRegionalQuotaPolicy(request);
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
+    @SneakyThrows
     public void blackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        try {
-            FilePolicyResponseDto dto = policyFacade.getBlackListPolicy();
-            sendCsvFile(responseObserver, dto);
-        } catch (Exception exp) {
-            log.error(exp.getMessage(), exp);
-            responseObserver.onError(exp);
-        }
+        FilePolicyResponseDto dto = policyFacade.getBlackListPolicy();
+        sendCsvFile(responseObserver, dto);
     }
 
     @Override
+    @SneakyThrows
     public void coding(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        try {
-            FilePolicyResponseDto dto = policyFacade.getCodingPolicy();
-            sendCsvFile(responseObserver, dto);
-        } catch (Exception exp) {
-            log.error(exp.getMessage(), exp);
-            responseObserver.onError(exp);
-        }
+        FilePolicyResponseDto dto = policyFacade.getCodingPolicy();
+        sendCsvFile(responseObserver, dto);
     }
 
     @Override
+    @SneakyThrows
     public void grayList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        try {
-            FilePolicyResponseDto dto = policyFacade.getCodingPolicy();
-            sendCsvFile(responseObserver, dto);
-        } catch (Exception exp) {
-            log.error(exp.getMessage(), exp);
-            responseObserver.onError(exp);
-        }
+        FilePolicyResponseDto dto = policyFacade.getGrayListPolicy();
+        sendCsvFile(responseObserver, dto);
     }
 
     private void sendCsvFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
