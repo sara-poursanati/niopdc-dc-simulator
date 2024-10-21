@@ -1,7 +1,6 @@
 package ir.niopdc.policy.utils;
 
 import com.google.protobuf.Timestamp;
-import ir.niopdc.common.entity.policy.OperationEnum;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;
