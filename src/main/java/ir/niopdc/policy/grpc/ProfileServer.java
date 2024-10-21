@@ -1,21 +1,15 @@
 package ir.niopdc.policy.grpc;
 
 import io.grpc.stub.StreamObserver;
-import ir.niopdc.common.entity.ProfileMessageDto;
-import ir.niopdc.common.entity.ProfileTopicPolicyDto;
 import ir.niopdc.common.grpc.profile.MGConfigServiceGrpc;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
-import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
 import ir.niopdc.policy.facade.PolicyFacade;
 import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @GrpcService
 @Slf4j
@@ -41,8 +35,7 @@ public class ProfileServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
     @Override
     public void profile(ProfileRequest request, StreamObserver<ProfileResponse> responseObserver) {
         log.debug("A profile request received for gateway [{}]", request.getMediaGatewayId());
-        ProfileMessageDto profileMessageModel = profileFacade.getProfile(request.getMediaGatewayId());
-        sendProfileResponse(profileMessageModel, responseObserver);
+        sendProfileResponse(request.getMediaGatewayId(), responseObserver);
     }
 
 //    private void sendDataResponse(DataDto data, StreamObserver<CommonConfigResponse> responseObserver) {
@@ -77,44 +70,9 @@ public class ProfileServer extends MGConfigServiceGrpc.MGConfigServiceImplBase {
 //        return chunk;
 //    }
 
-    private void sendProfileResponse(ProfileMessageDto profileMessageModel, StreamObserver<ProfileResponse> responseObserver) {
-        getProfileTopicPolicies(profileMessageModel);
-
-
-        ProfileResponse.Builder builder = buildProfileResponse(profileMessageModel);
+    private void sendProfileResponse(String mediaGatewayId, StreamObserver<ProfileResponse> responseObserver) {
+        ProfileResponse.Builder builder = profileFacade.getProfile(mediaGatewayId);
         responseObserver.onNext(builder.build());
         responseObserver.onCompleted();
-    }
-
-    private ProfileResponse.Builder buildProfileResponse(ProfileMessageDto profileMessageModel) {
-        ProfileResponse.Builder builder =  ProfileResponse.newBuilder();
-        builder.setAddress(profileMessageModel.getAddress())
-                .setAreaId(profileMessageModel.getAreaId())
-                .setName(profileMessageModel.getName())
-                .setMediaGatewayId(profileMessageModel.getTerminalId())
-                .setFuelStationId(profileMessageModel.getGsId())
-                .setTerminalCount(profileMessageModel.getPtCount())
-                .setZoneId(profileMessageModel.getZoneId())
-                .addAllTopicPolicies(getProfileTopicPolicies(profileMessageModel));
-        return builder;
-    }
-
-    private List<ProfileTopicPolicy> getProfileTopicPolicies(ProfileMessageDto profileMessageModel) {
-        List<ProfileTopicPolicy> profileTopicPolicies = new ArrayList<>();
-        for (ProfileTopicPolicyDto policyModel : profileMessageModel.getTopicPolicies()) {
-            profileTopicPolicies.add(ProfileTopicPolicy
-                    .newBuilder()
-                    .setBigDelay(policyModel.getBigDelay())
-                    .setPolicy(policyModel.getPolicy())
-                    .setRetain(policyModel.getRetain())
-                    .setQos(policyModel.getQos())
-                    .setSlightDelay(policyModel.getSlightDelay())
-                    .setPublishTopicTitle(policyModel.getPublishTopicTitle())
-                    .setMaxBigDelayTryCount(policyModel.getMaxBigDelayTryCount())
-                    .setSubscribeTopicTitle(policyModel.getSubscribeTopicTitle())
-                    .setMaxSlightDelayTryCount(policyModel.getMaxSlightDelayTryCount())
-                    .build());
-        }
-        return profileTopicPolicies;
     }
 }

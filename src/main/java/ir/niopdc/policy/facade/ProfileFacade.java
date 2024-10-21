@@ -1,17 +1,16 @@
 package ir.niopdc.policy.facade;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import ir.niopdc.common.entity.ProfileMessageDto;
 import ir.niopdc.common.entity.ProfileTopicPolicyDto;
+import ir.niopdc.common.grpc.profile.ProfileResponse;
+import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
 import ir.niopdc.policy.domain.fuelstation.FuelStation;
-import ir.niopdc.policy.domain.fuelstation.FuelStationService;
-import ir.niopdc.policy.domain.fuelterminal.FuelTerminal;
+import ir.niopdc.policy.domain.fuelstationpolicy.FuelStationPolicy;
+import ir.niopdc.policy.domain.fuelstationpolicy.FuelStationPolicyService;
+import ir.niopdc.policy.domain.fuelterminal.FuelTerminalService;
 import ir.niopdc.policy.domain.mediagateway.MediaGateway;
 import ir.niopdc.policy.domain.mediagateway.MediaGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -19,29 +18,31 @@ import java.util.Random;
 @Service
 public class ProfileFacade {
 
-    @Autowired
     private MediaGatewayService mediaGatewayService;
+    private FuelStationPolicyService fuelStationPolicyService;
+    private FuelTerminalService fuelTerminalService;
+
     @Autowired
-    private FuelStationService fuelStationService;
-    private final Random random = new Random();
-
-    public ProfileMessageDto getProfile(String gatewayId) {
-        ProfileMessageDto profile = getProfileMessageModel(gatewayId);
-
-        addPolicies(profile);
-
-        return profile;
+    private void setMediaGatewayService(MediaGatewayService theMediaGatewayService) {
+        this.mediaGatewayService = theMediaGatewayService;
     }
 
-    private void addPolicies(ProfileMessageDto profile) {
-        List<ProfileTopicPolicyDto> policyList = new ArrayList<>();
+    @Autowired
+    private void setFuelStationPolicyService(FuelStationPolicyService theFuelStationPolicyService) {
+        this.fuelStationPolicyService = theFuelStationPolicyService;
+    }
 
-        ProfileTopicPolicyDto policy1 = getProfileTopicPolicyModel1();
-        policyList.add(policy1);
-        ProfileTopicPolicyDto policy2 = getProfileTopicPolicyModel2();
-        policyList.add(policy2);
+    @Autowired
+    private void setFuelTerminalService(FuelTerminalService theFuelTerminalService) {
+        this.fuelTerminalService = theFuelTerminalService;
+    }
 
-        profile.setTopicPolicies(policyList);
+    private final Random random = new Random();
+
+    public ProfileResponse.Builder getProfile(String gatewayId) {
+        var unbuildedResponse = getProfileMessageModel(gatewayId);
+
+        return unbuildedResponse;
     }
 
     private ProfileTopicPolicyDto getProfileTopicPolicyModel1() {
@@ -72,24 +73,45 @@ public class ProfileFacade {
         return policy;
     }
 
-    private ProfileMessageDto getProfileMessageModel(String gatewayId) {
+    private ProfileResponse.Builder getProfileMessageModel(String gatewayId) {
         MediaGateway mediaGateway = mediaGatewayService.findById(gatewayId);
         if (mediaGateway == null) {
-            throw new StatusRuntimeException(Status.NOT_FOUND.withDescription("The media gateway not found."));
+            throw new IllegalArgumentException();
         }
-        return getProfileMessageDto(mediaGateway);
+        return buildProfileResponse(mediaGateway);
     }
 
-    private ProfileMessageDto getProfileMessageDto(MediaGateway mediaGateway) {
-        FuelStation theFuelStation = fuelStationService.getFuelStationByMediaGateway(mediaGateway);
-        ProfileMessageDto theProfile = new ProfileMessageDto();
-        theProfile.setTerminalId(mediaGateway.getSerialNumber());
-        theProfile.setAddress(theFuelStation.getAddress());
-        theProfile.setName(theFuelStation.getName());
-        theProfile.setZoneId(theFuelStation.getZoneId());
-        theProfile.setAreaId(theFuelStation.getAreaId());
-        theProfile.setGsId(theFuelStation.getId());
-        theProfile.setPtCount(theFuelStation.getFuelTerminals().size());
-        return theProfile;
+    private ProfileResponse.Builder buildProfileResponse(MediaGateway mediaGateway) {
+        FuelStation theFuelStation = mediaGateway.getFuelStation();
+        List<FuelStationPolicy> fuelStationPolicis = fuelStationPolicyService.findFuelStationPolicyByFuelStationId(theFuelStation.getId());
+        ProfileResponse.Builder builder =  ProfileResponse.newBuilder();
+        builder.setAddress(theFuelStation.getAddress())
+                .setAreaId(theFuelStation.getAreaId())
+                .setName(theFuelStation.getName())
+                .setMediaGatewayId(mediaGateway.getSerialNumber())
+                .setFuelStationId(theFuelStation.getId())
+                .setTerminalCount(fuelTerminalService.getPtCountByFuelStation(theFuelStation))
+                .setZoneId(theFuelStation.getZoneId())
+                .addAllTopicPolicies(getProfileTopicPolicies(fuelStationPolicis));
+        return builder;
+    }
+
+    private List<ProfileTopicPolicy> getProfileTopicPolicies(List<FuelStationPolicy> fuelStationPolicies) {
+        List<ProfileTopicPolicy> profileTopicPolicies = new ArrayList<>();
+        for (FuelStationPolicy policyModel : fuelStationPolicies) {
+            profileTopicPolicies.add(ProfileTopicPolicy
+                    .newBuilder()
+                    .setBigDelay(policyModel.getBigDelay())
+                    .setPolicy(policyModel.getId().getPolicyId())
+                    .setRetain(policyModel.getRetain())
+                    .setQos(policyModel.getQos())
+                    .setSlightDelay(policyModel.getSlightDelay())
+                    .setPublishTopicTitle(policyModel.getPublishTopicTitle())
+                    .setMaxBigDelayTryCount(policyModel.getMaxBigDelayTryCount())
+                    .setSubscribeTopicTitle(policyModel.getSubscribeTopicTitle())
+                    .setMaxSlightDelayTryCount(policyModel.getMaxSlightDelayTryCount())
+                    .build());
+        }
+        return profileTopicPolicies;
     }
 }
