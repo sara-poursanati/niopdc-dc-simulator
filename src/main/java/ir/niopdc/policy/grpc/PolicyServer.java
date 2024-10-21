@@ -48,7 +48,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     public void nationalQuota(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
         try {
-            FilePolicyResponseDto dto = policyFacade.getNationalQuotaPolicy();
+            FilePolicyResponseDto dto = policyFacade.getNationalQuotaPolicy(request);
             sendBinaryFile(responseObserver, dto);
         } catch (Exception exp) {
             log.error(exp.getMessage(), exp);

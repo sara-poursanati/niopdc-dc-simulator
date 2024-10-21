@@ -85,8 +85,8 @@ public class PolicyFacade {
         return GrpcUtils.generateRateResponse(metadata, fuels, fuelRates);
     }
 
-    public FilePolicyResponseDto getNationalQuotaPolicy() {
-        PolicyMetadata metadata = loadMetadata(new PolicyVersion());
+    public FilePolicyResponseDto getNationalQuotaPolicy(PolicyRequest request) {
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.NATIONAL_QUOTA, request.getVersion());
         Path filePath = Path.of(nationalQuotaPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
