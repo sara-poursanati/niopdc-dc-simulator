@@ -10,6 +10,6 @@ import lombok.ToString;
 @Setter
 @ToString
 public class FuelStationPolicyKey {
-    private String policyId;
+    private int policyId;
     private String fuelStationId;
 }
