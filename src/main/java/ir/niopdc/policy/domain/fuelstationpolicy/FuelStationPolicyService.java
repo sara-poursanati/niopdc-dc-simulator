@@ -8,7 +8,7 @@ import java.util.List;
 @Service
 public class FuelStationPolicyService extends BaseService<FuelStationPolicyRepository, FuelStationPolicy, FuelStationPolicyKey> {
 
-    public List<FuelStationPolicy> findFuelStationPolicyByFuelStationId(String fuelStationId) {
+    public List<FuelStationPolicy> findByFuelStationId(String fuelStationId) {
         return getRepository().findById_FuelStationId(fuelStationId);
     }
 }
