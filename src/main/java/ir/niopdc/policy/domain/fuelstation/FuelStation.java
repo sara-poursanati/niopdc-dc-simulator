@@ -45,9 +45,4 @@ public class FuelStation {
     private String owner;
     private Character initStatus;
     private Character validity;
-//    @OneToMany(mappedBy = "fuelStation",
-//            fetch = FetchType.EAGER,
-//            cascade = CascadeType.ALL)
-//    private List<FuelTerminal> fuelTerminals;
-
 }
