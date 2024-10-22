@@ -39,6 +39,9 @@ public class PolicyFacade {
     @Value("${app.codingList.path}")
     private String codingListPath;
 
+    @Value("${app.grayList.path}")
+    private String grayListPath;
+
     @Autowired
     public void setFuelService(FuelService fuelService) {
         this.fuelService = fuelService;
@@ -89,6 +92,13 @@ public class PolicyFacade {
     public FilePolicyResponseDto getCodingPolicy() {
         PolicyMetadata metadata = loadMetadata();
         Path filePath = Path.of(codingListPath);
+
+        return getFilePolicyResponseDto(metadata, filePath);
+    }
+
+    public FilePolicyResponseDto getGrayListPolicy() {
+        PolicyMetadata metadata = loadMetadata();
+        Path filePath = Path.of(grayListPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
