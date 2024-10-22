@@ -7,6 +7,7 @@ import ir.niopdc.policy.domain.fuelrate.FuelRate;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,5 +108,11 @@ public class GrpcUtils {
                 .setSeconds(instant.getEpochSecond())
                 .setNanos(instant.getNano())
                 .build();
+    }
+
+    public static ZonedDateTime convertToZonedDateTime(Timestamp timestamp) {
+        return Instant
+                .ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos())
+                .atZone(ZoneId.systemDefault());
     }
 }
