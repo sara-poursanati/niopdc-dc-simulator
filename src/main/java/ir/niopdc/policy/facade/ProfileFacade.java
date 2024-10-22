@@ -90,7 +90,7 @@ public class ProfileFacade {
                 .setName(theFuelStation.getName())
                 .setMediaGatewayId(mediaGateway.getSerialNumber())
                 .setFuelStationId(theFuelStation.getId())
-                .setTerminalCount(fuelTerminalService.getPtCountByFuelStation(theFuelStation))
+                .setTerminalCount((int)fuelTerminalService.getPtCountByFuelStation(theFuelStation.getId()))
                 .setZoneId(theFuelStation.getZoneId())
                 .addAllTopicPolicies(getProfileTopicPolicies(fuelStationPolicis));
         return builder;

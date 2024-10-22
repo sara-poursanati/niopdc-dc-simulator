@@ -21,14 +21,14 @@ public class FuelTerminal {
     @Column(name = "FUEL_TYPE")
     private String fuelId;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            cascade = {CascadeType.DETACH,
-                    CascadeType.REFRESH, CascadeType.MERGE,
-                    CascadeType.PERSIST}
-    )
-    @JoinColumn(name = "fuel_station_id", updatable = false)
-    private FuelStation fuelStation;
+//    @ManyToOne(
+//            fetch = FetchType.LAZY,
+//            cascade = {CascadeType.DETACH,
+//                    CascadeType.REFRESH, CascadeType.MERGE,
+//                    CascadeType.PERSIST}
+//    )
+//    @JoinColumn(name = "gs_id", updatable = false)
+//    private FuelStation fuelStation;
     private String fuelSamId;
     private String paySamId;
     private String ipcIpAddr;

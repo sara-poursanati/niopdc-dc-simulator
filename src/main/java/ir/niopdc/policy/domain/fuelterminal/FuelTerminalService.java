@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class FuelTerminalService extends BaseService<FuelTerminalRepository, FuelTerminal, FuelTerminalKey> {
 
-    public int getPtCountByFuelStation(FuelStation theFuelStation) {
-        return theFuelStation.getFuelTerminals().size();
+    public long getPtCountByFuelStation(String theFuelStationId) {
+        return getRepository().countById_stationId(theFuelStationId);
     }
 
 }

@@ -44,21 +44,9 @@ public class FuelStation {
     private String owner;
     private Character initStatus;
     private Character validity;
-    @OneToMany(mappedBy = "fuelStation",
-            fetch = FetchType.EAGER,
-            cascade = CascadeType.ALL)
-    private List<FuelTerminal> fuelTerminals;
+//    @OneToMany(mappedBy = "fuelStation",
+//            fetch = FetchType.EAGER,
+//            cascade = CascadeType.ALL)
+//    private List<FuelTerminal> fuelTerminals;
 
-
-    public void addFuelTerminal(FuelTerminal fuelTerminal) {
-        if (this.fuelTerminals == null) {
-            this.fuelTerminals = new ArrayList<>();
-        }
-        fuelTerminal.setFuelStation(this);
-        this.fuelTerminals.add(fuelTerminal);
-    }
-
-    public void removeFuelTerminal(FuelTerminal fuelTerminal) {
-        this.fuelTerminals.remove(fuelTerminal);
-    }
 }

@@ -46,7 +46,7 @@ public class GrpcUtils {
                     .setSaving1(rule.getSaving1())
                     .setMaxFuelCount(rule.getMaxFuelCount())
                     .setDuration(rule.getDuration())
-                    .setOperation(operationEnum.INSERT)
+                    .setOperation(OperationEnumMessage.INSERT)
                     .build();
             result.add(regionalQuotaMessage);
         }
@@ -59,7 +59,7 @@ public class GrpcUtils {
             FuelMessage fuelMessage = FuelMessage.newBuilder()
                     .setCode(fuel.getId())
                     .setName(fuel.getName())
-                    .setOperation(operationEnum.INSERT)
+                    .setOperation(OperationEnumMessage.INSERT)
                     .addAllRates(getFuelRateDtos(fuel))
                     .build();
             result.add(fuelMessage);
