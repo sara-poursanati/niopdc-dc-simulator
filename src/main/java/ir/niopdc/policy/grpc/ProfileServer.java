@@ -4,12 +4,10 @@ import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.grpc.profile.MGConfigServiceGrpc;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
-import ir.niopdc.policy.facade.PolicyFacade;
 import ir.niopdc.policy.facade.ProfileFacade;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 @GrpcService
 @Slf4j

@@ -1,11 +1,14 @@
 package ir.niopdc.policy.domain.fuelterminal;
 
-import ir.niopdc.policy.domain.fuelstation.FuelStation;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+
 import java.time.LocalDateTime;
 
 @Entity
