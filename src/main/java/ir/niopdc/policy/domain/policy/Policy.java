@@ -17,7 +17,7 @@ import lombok.ToString;
 public class Policy {
 
     @Id
-    private Integer id;
+    private Byte id;
     private String name;
     private String currentVersion;
 

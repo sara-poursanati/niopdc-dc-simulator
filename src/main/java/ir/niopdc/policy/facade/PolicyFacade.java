@@ -1,17 +1,23 @@
 package ir.niopdc.policy.facade;
 
+import ir.niopdc.common.entity.policy.PolicyEnum;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
+import ir.niopdc.common.grpc.policy.PolicyRequest;
 import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.common.grpc.policy.RegionalQuotaResponse;
-import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
-import ir.niopdc.policy.domain.quotarule.QuotaRuleService;
+import ir.niopdc.policy.domain.fuelrate.FuelRate;
+import ir.niopdc.policy.domain.fuelrate.FuelRateService;
+import ir.niopdc.policy.domain.policy.Policy;
+import ir.niopdc.policy.domain.policy.PolicyService;
+import ir.niopdc.policy.domain.policyversion.PolicyVersion;
+import ir.niopdc.policy.domain.policyversion.PolicyVersionKey;
+import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,13 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class PolicyFacade {
-    private FuelService fuelService;
-    private QuotaRuleService quotaRuleService;
-    private RegionalQuotaRuleService regionalQuotaRuleService;
-    private BlackListService blackListService;
 
     @Value("${app.nationalQuota.path}")
     private String nationalQuotaPath;
@@ -42,14 +45,15 @@ public class PolicyFacade {
     @Value("${app.grayList.path}")
     private String grayListPath;
 
+    private FuelService fuelService;
+    private RegionalQuotaRuleService regionalQuotaRuleService;
+    private PolicyService policyService;
+    private PolicyVersionService policyVersionService;
+    private FuelRateService fuelRateService;
+
     @Autowired
     public void setFuelService(FuelService fuelService) {
         this.fuelService = fuelService;
-    }
-
-    @Autowired
-    public void setQuotaRuleService(QuotaRuleService quotaRuleService) {
-        this.quotaRuleService = quotaRuleService;
     }
 
     @Autowired
@@ -58,63 +62,108 @@ public class PolicyFacade {
     }
 
     @Autowired
-    public void setBlackListService(BlackListService blackListService) {
-        this.blackListService = blackListService;
+    public void setPolicyService(PolicyService policyService) {
+        this.policyService = policyService;
     }
+
+    @Autowired
+    public void setPolicyVersionService(PolicyVersionService policyVersionService) {
+        this.policyVersionService = policyVersionService;
+    }
+
+    @Autowired
+    public void setFuelRateService(FuelRateService fuelRateService) {
+        this.fuelRateService = fuelRateService;
+    }
+
 
     @Transactional
-    public RateResponse getFuelRatePolicy() {
-        PolicyMetadata metadata = loadMetadata();
-        List<Fuel> fuels = fuelService.findAll();
-        return GrpcUtils.generateRateResponse(metadata, fuels);
+    public RateResponse getFuelRatePolicy(PolicyRequest request) {
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.RATE);
+        if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
+            List<Fuel> fuels = fuelService.findAll();
+            List<FuelRate> fuelRates = fuelRateService.findByVersion(metadata.getVersion());
+            return GrpcUtils.generateRateResponse(metadata, fuels, fuelRates);
+        } else {
+            return GrpcUtils.generateRateResponse(metadata);
+        }
     }
 
-    public FilePolicyResponseDto getNationalQuotaPolicy() {
-        PolicyMetadata metadata = loadMetadata();
-        Path filePath = Path.of(nationalQuotaPath);
-
-        return getFilePolicyResponseDto(metadata, filePath);
+    public FilePolicyResponseDto getNationalQuotaPolicy(PolicyRequest request) {
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.NATIONAL_QUOTA);
+        if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
+            Path filePath = Path.of(nationalQuotaPath);
+            return getFilePolicyResponseDto(metadata, filePath);
+        } else {
+            return getFilePolicyResponseDto(metadata);
+        }
     }
 
-    public RegionalQuotaResponse getRegionalQuotaPolicy() {
-        PolicyMetadata metadata = loadMetadata();
-        List<RegionalQuotaRule> regionalQuotaRules = regionalQuotaRuleService.findAll();
-        return GrpcUtils.generateRegionalQuotaResponse(metadata, regionalQuotaRules);
+    public RegionalQuotaResponse getRegionalQuotaPolicy(PolicyRequest request) {
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.REGIONAL_QUOTA);
+        if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
+            List<RegionalQuotaRule> regionalQuotaRules = regionalQuotaRuleService.findAll();
+            return GrpcUtils.generateRegionalQuotaResponse(metadata, regionalQuotaRules);
+        } else {
+            return GrpcUtils.generateRegionalQuotaResponse(metadata);
+        }
+
     }
 
     public FilePolicyResponseDto getBlackListPolicy() {
-        PolicyMetadata metadata = loadMetadata();
+        PolicyMetadata metadata = loadMetadata(new PolicyVersion());
         Path filePath = Path.of(blackListPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
     public FilePolicyResponseDto getCodingPolicy() {
-        PolicyMetadata metadata = loadMetadata();
+        PolicyMetadata metadata = loadMetadata(new PolicyVersion());
         Path filePath = Path.of(codingListPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
     public FilePolicyResponseDto getGrayListPolicy() {
-        PolicyMetadata metadata = loadMetadata();
+        PolicyMetadata metadata = loadMetadata(new PolicyVersion());
         Path filePath = Path.of(grayListPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
-    public FilePolicyResponseDto getTerminalSoftware() {
-        PolicyMetadata metadata = loadMetadata();
-        Path filePath = Path.of(terminalAppPath);
+    public FilePolicyResponseDto getTerminalSoftware(PolicyRequest request) {
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.APP);
+        if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
+            Path filePath = Path.of(terminalAppPath);
+            return getFilePolicyResponseDto(metadata, filePath);
+        } else {
+            return getFilePolicyResponseDto(metadata);
+        }
 
-        return getFilePolicyResponseDto(metadata, filePath);
+
     }
 
-    private PolicyMetadata loadMetadata() {
+    private PolicyMetadata loadMetadataByVersion(PolicyEnum policyEnum) {
+        Policy policy = policyService.findById(policyEnum.getValue());
+        Objects.requireNonNull(policy, String.format("Policy not found for %s", policyEnum));
+        PolicyVersionKey key = new PolicyVersionKey();
+        key.setPolicyId(policy.getId());
+        key.setVersion(policy.getCurrentVersion());
+        PolicyVersion policyVersion = policyVersionService.findById(key);
+        return loadMetadata(policyVersion);
+    }
+
+    private static boolean isNotUpdated(String clientVersion, String serverVersion) {
+        return (clientVersion == null) || (!clientVersion.equals(serverVersion));
+    }
+
+    private PolicyMetadata loadMetadata(PolicyVersion policyVersion) {
         PolicyMetadata.Builder metadata = PolicyMetadata.newBuilder()
-            .setPolicyId(Byte.parseByte(RandomStringUtils.random(2, false, true)))
-            .setVersion(RandomStringUtils.random(10, false, true))
-            .setVersionName(RandomStringUtils.random(20, true, true));
+                .setPolicyId(policyVersion.getId().getPolicyId())
+                .setVersion(policyVersion.getId().getVersion())
+                .setVersionName(policyVersion.getVersionName())
+                .setOperationDateTime(GrpcUtils.convertToGoogleTimestamp(policyVersion.getReleaseTime()))
+                .setActivationDateTime(GrpcUtils.convertToGoogleTimestamp(policyVersion.getActivationTime()));
         return metadata.build();
     }
 
@@ -122,6 +171,12 @@ public class PolicyFacade {
         FilePolicyResponseDto response = new FilePolicyResponseDto();
         response.setMetadata(metadata);
         response.setFile(filePath);
+        return response;
+    }
+
+    private FilePolicyResponseDto getFilePolicyResponseDto(PolicyMetadata metadata) {
+        FilePolicyResponseDto response = new FilePolicyResponseDto();
+        response.setMetadata(metadata);
         return response;
     }
 }

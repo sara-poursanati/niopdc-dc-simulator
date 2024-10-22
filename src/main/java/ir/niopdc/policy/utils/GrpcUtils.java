@@ -1,22 +1,33 @@
 package ir.niopdc.policy.utils;
 
+import com.google.protobuf.Timestamp;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class GrpcUtils {
 
     private GrpcUtils() {
     }
 
-    public static RateResponse generateRateResponse(PolicyMetadata metadata, List<Fuel> fuels) {
+    public static RateResponse generateRateResponse(PolicyMetadata metadata, List<Fuel> fuels, List<FuelRate> fuelRates) {
         RateResponse.Builder builder = RateResponse.newBuilder();
         builder.setMetadata(metadata)
-                .addAllFuels(getFuelDtos(fuels));
+                .addAllFuels(getFuelDtos(fuels, fuelRates));
+        return builder.build();
+    }
+
+    public static RateResponse generateRateResponse(PolicyMetadata metadata) {
+        RateResponse.Builder builder = RateResponse.newBuilder();
+        builder.setMetadata(metadata);
         return builder.build();
     }
 
@@ -25,6 +36,11 @@ public class GrpcUtils {
         builder.setMetadata(metadata)
                 .addAllRegionalQuotas(getRegionalQuotaDts(regionalQuotaRules));
         return builder.build();
+    }
+
+    public static RegionalQuotaResponse generateRegionalQuotaResponse(PolicyMetadata metadata) {
+        RegionalQuotaResponse.Builder builder = RegionalQuotaResponse.newBuilder();
+        return builder.setMetadata(metadata).build();
     }
 
     private static Iterable<RegionalQuotaMessage> getRegionalQuotaDts(List<RegionalQuotaRule> regionalQuotaRules) {
@@ -53,23 +69,27 @@ public class GrpcUtils {
         return result;
     }
 
-    private static Iterable<FuelMessage> getFuelDtos(List<Fuel> fuels) {
+    private static Iterable<FuelMessage> getFuelDtos(List<Fuel> fuels, List<FuelRate> fuelRates) {
         List<FuelMessage> result = new ArrayList<>();
+        Map<Integer, List<FuelRate>> rateMap = fuelRates.stream().collect(Collectors.groupingBy(FuelRate::getFuelId));
         for (Fuel fuel : fuels) {
             FuelMessage fuelMessage = FuelMessage.newBuilder()
                     .setCode(fuel.getId())
                     .setName(fuel.getName())
                     .setOperation(OperationEnumMessage.INSERT)
-                    .addAllRates(getFuelRateDtos(fuel))
+                    .addAllRates(getFuelRateDtos(rateMap.get(fuel.getId())))
                     .build();
             result.add(fuelMessage);
         }
         return result;
     }
 
-    private static Iterable<FuelRateMessage> getFuelRateDtos(Fuel fuel) {
+    private static Iterable<FuelRateMessage> getFuelRateDtos(List<FuelRate> rates) {
         List<FuelRateMessage> result = new ArrayList<>();
-        for (FuelRate rate : fuel.getRates()) {
+        if (rates == null || rates.isEmpty()) {
+            return result;
+        }
+        for (FuelRate rate : rates) {
             FuelRateMessage fuelRateDto = FuelRateMessage.newBuilder()
                     .setRateNumber(rate.getRateNumber())
                     .setRateValue(rate.getRateValue())
@@ -80,4 +100,12 @@ public class GrpcUtils {
         return result;
     }
 
+    public static Timestamp convertToGoogleTimestamp(ZonedDateTime dateTime) {
+        Instant instant = dateTime.toInstant();
+
+        return Timestamp.newBuilder()
+                .setSeconds(instant.getEpochSecond())
+                .setNanos(instant.getNano())
+                .build();
+    }
 }
