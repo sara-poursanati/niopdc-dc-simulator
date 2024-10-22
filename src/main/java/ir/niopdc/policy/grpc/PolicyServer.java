@@ -66,8 +66,11 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     @SneakyThrows
     public void blackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        FilePolicyResponseDto dto = policyFacade.getBlackListPolicy();
-        sendCsvFile(responseObserver, dto);
+        if (request.getMode() == ModeEnumMessage.CONFIG) {
+            sendCompleteBlackList(responseObserver);
+        } else {
+            sendDifferentialBlackList(request, responseObserver);
+        }
     }
 
     @Override
@@ -82,6 +85,14 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     public void grayList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
         FilePolicyResponseDto dto = policyFacade.getGrayListPolicy();
         sendCsvFile(responseObserver, dto);
+    }
+
+    private void sendCompleteBlackList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        FilePolicyResponseDto dto = policyFacade.getCompleteBlackList();
+        sendCsvFile(responseObserver, dto);
+    }
+
+    private void sendDifferentialBlackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
     }
 
     private void sendCsvFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
