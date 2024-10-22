@@ -19,6 +19,7 @@ import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
+import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -122,7 +123,7 @@ public class PolicyFacade {
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
-    public FilePolicyResponseDto getDifferentialBlackList(PolicyRequest request) {
+    public ListResponseDto getDifferentialBlackList(PolicyRequest request) {
         ZonedDateTime lastOperationTime = GrpcUtils.convertToZonedDateTime(request.getLastOperationDate());
         List<BlackList> blackLists = blackListService.findByOperationDateAfter(lastOperationTime);
         Optional<ZonedDateTime> maxOperationDateTime = blackLists
@@ -132,9 +133,8 @@ public class PolicyFacade {
         ZonedDateTime latestOperationDate = maxOperationDateTime.orElse(lastOperationTime);
 
         PolicyMetadata metadata = loadMetadataByOperationDate(PolicyEnum.BLACK_LIST, latestOperationDate);
-        Path filePath = Path.of(blackListPath);
 
-        return getFilePolicyResponseDto(metadata, filePath);
+        return getListResponseDto(metadata, blackLists);
     }
 
     public FilePolicyResponseDto getCodingPolicy() {
@@ -208,6 +208,13 @@ public class PolicyFacade {
     private FilePolicyResponseDto getFilePolicyResponseDto(PolicyMetadata metadata) {
         FilePolicyResponseDto response = new FilePolicyResponseDto();
         response.setMetadata(metadata);
+        return response;
+    }
+
+    private ListResponseDto getListResponseDto(PolicyMetadata metadata, List<?> objects) {
+        ListResponseDto response = new ListResponseDto();
+        response.setMetadata(metadata);
+        response.setObjects(objects);
         return response;
     }
 
