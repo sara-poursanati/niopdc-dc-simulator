@@ -1,13 +1,14 @@
 package ir.niopdc.policy.domain.fuelstation;
 
-import ir.niopdc.policy.domain.fuelterminal.FuelTerminal;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "GS_INFO")
@@ -44,9 +45,4 @@ public class FuelStation {
     private String owner;
     private Character initStatus;
     private Character validity;
-//    @OneToMany(mappedBy = "fuelStation",
-//            fetch = FetchType.EAGER,
-//            cascade = CascadeType.ALL)
-//    private List<FuelTerminal> fuelTerminals;
-
 }

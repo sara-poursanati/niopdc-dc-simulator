@@ -17,7 +17,6 @@ public class MediaGateway {
 
     @Id
     private String serialNumber;
-//    private String stationId;
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "station_id", referencedColumnName = "GS_ID")
     private FuelStation fuelStation;

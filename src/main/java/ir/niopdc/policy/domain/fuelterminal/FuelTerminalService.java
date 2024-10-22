@@ -1,7 +1,6 @@
 package ir.niopdc.policy.domain.fuelterminal;
 
 import ir.niopdc.base.BaseService;
-import ir.niopdc.policy.domain.fuelstation.FuelStation;
 import org.springframework.stereotype.Service;
 
 @Service
