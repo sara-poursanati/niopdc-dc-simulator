@@ -144,7 +144,7 @@ public class PolicyFacade {
     }
 
     public FilePolicyResponseDto getCompleteCodingList() {
-        PolicyMetadata metadata = loadMetadata(new PolicyVersion());
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.CODING);
         Path filePath = Path.of(codingListPath);
 
         return getFilePolicyResponseDto(metadata, filePath);

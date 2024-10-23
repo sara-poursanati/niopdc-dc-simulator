@@ -190,6 +190,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
                     .newBuilder()
                     .setMetadata(listResponseDto.getMetadata())
                     .setFile(ByteString.copyFrom(fileBytes)).build());
+            responseObserver.onCompleted();
         }
     }
 }
