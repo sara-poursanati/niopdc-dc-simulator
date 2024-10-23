@@ -3,9 +3,11 @@ package ir.niopdc.policy.grpc;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import ir.niopdc.common.entity.policy.BlackListDto;
+import ir.niopdc.common.entity.policy.CodingDto;
 import ir.niopdc.common.entity.policy.OperationEnum;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.config.AppConfig;
+import ir.niopdc.policy.domain.coding.CodingList;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.facade.PolicyFacade;
@@ -105,15 +107,15 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
 
     private void sendCompleteBlackList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
         FilePolicyResponseDto dto = policyFacade.getCompleteBlackList();
-        sendCsvFile(responseObserver, dto);
+        sendBlackListFile(responseObserver, dto);
     }
 
     private void sendCompleteCodingList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
         FilePolicyResponseDto dto = policyFacade.getCompleteCodingList();
-        sendCsvFile(responseObserver, dto);
+        sendCodingListFile(responseObserver, dto);
     }
 
-    private void sendCsvFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
+    private void sendBlackListFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
         log.info("Sending file started at {}", LocalDateTime.now());
         responseObserver.onNext(FilePolicyResponse.newBuilder()
                 .setMetadata(dto.getMetadata()).build());
@@ -124,9 +126,34 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
                 if (chunk.isEmpty()) {
                     break;
                 }
-                List<BlackListDto> blackListDtos = chunk.stream().map(this::convertFromCsv).toList();
+                List<BlackListDto> blackListDtos = chunk.stream().map(this::convertBlackListFromCsv).toList();
                 try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
                     objectOutputStream.writeObject(blackListDtos);
+                    byte[] fileBytes = outputStream.toByteArray();
+                    responseObserver.onNext(FilePolicyResponse.newBuilder().setFile(ByteString.copyFrom(fileBytes)).build());
+                } catch (IOException exp) {
+                    log.error(exp.getMessage(), exp);
+                }
+            }
+        }
+        responseObserver.onCompleted();
+        log.info("Sending file ended at {}", LocalDateTime.now());
+    }
+
+    private void sendCodingListFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
+        log.info("Sending file started at {}", LocalDateTime.now());
+        responseObserver.onNext(FilePolicyResponse.newBuilder()
+                .setMetadata(dto.getMetadata()).build());
+        try (Stream<String> stream = Files.lines(dto.getFile(), StandardCharsets.UTF_8)) {
+            Spliterator<String> split = stream.spliterator();
+            while (true) {
+                List<String> chunk = getChunk(split);
+                if (chunk.isEmpty()) {
+                    break;
+                }
+                List<CodingDto> codingDtos = chunk.stream().map(this::convertCodingListFromCsv).toList();
+                try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
+                    objectOutputStream.writeObject(codingDtos);
                     byte[] fileBytes = outputStream.toByteArray();
                     responseObserver.onNext(FilePolicyResponse.newBuilder().setFile(ByteString.copyFrom(fileBytes)).build());
                 } catch (IOException exp) {
@@ -148,9 +175,17 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         return chunk;
     }
 
-    private BlackListDto convertFromCsv(String blackListCsv) {
-        String[] split = blackListCsv.split(appConfig.getCsvDelimiter());
+    private BlackListDto convertBlackListFromCsv(String csvText) {
+        String[] split = csvText.split(appConfig.getCsvDelimiter());
         BlackListDto result = new BlackListDto();
+        result.setCardId(split[0]);
+        result.setOperation(OperationEnum.getByValue(Byte.parseByte(split[1])));
+        return result;
+    }
+
+    private CodingDto convertCodingListFromCsv(String csvText) {
+        String[] split = csvText.split(appConfig.getCsvDelimiter());
+        CodingDto result = new CodingDto();
         result.setCardId(split[0]);
         result.setOperation(OperationEnum.getByValue(Byte.parseByte(split[1])));
         return result;
