@@ -1,5 +1,7 @@
 package ir.niopdc.policy.facade;
 
+import ir.niopdc.common.entity.policy.BlackListDto;
+import ir.niopdc.common.entity.policy.OperationEnum;
 import ir.niopdc.common.entity.policy.PolicyEnum;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.PolicyRequest;
@@ -19,7 +21,7 @@ import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
-import ir.niopdc.policy.dto.ListResponseDto;
+import ir.niopdc.policy.dto.BlackListResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -123,7 +125,7 @@ public class PolicyFacade {
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
-    public ListResponseDto getDifferentialBlackList(PolicyRequest request) {
+    public BlackListResponseDto getDifferentialBlackList(PolicyRequest request) {
         ZonedDateTime lastOperationTime = GrpcUtils.convertToZonedDateTime(request.getLastOperationDate());
         List<BlackList> blackLists = blackListService.findByOperationDateAfter(lastOperationTime);
         Optional<ZonedDateTime> maxOperationDateTime = blackLists
@@ -134,7 +136,7 @@ public class PolicyFacade {
 
         PolicyMetadata metadata = loadMetadataByOperationDate(PolicyEnum.BLACK_LIST, latestOperationDate);
 
-        return getListResponseDto(metadata, blackLists);
+        return getBlackListResponseDto(metadata, blackLists);
     }
 
     public FilePolicyResponseDto getCodingPolicy() {
@@ -211,10 +213,17 @@ public class PolicyFacade {
         return response;
     }
 
-    private ListResponseDto getListResponseDto(PolicyMetadata metadata, List<?> objects) {
-        ListResponseDto response = new ListResponseDto();
+    private BlackListResponseDto getBlackListResponseDto(PolicyMetadata metadata, List<BlackList> blackLists) {
+        BlackListResponseDto response = new BlackListResponseDto();
         response.setMetadata(metadata);
-        response.setObjects(objects);
+        List<BlackListDto> blackListDtos = blackLists.stream().map(item ->
+        {
+            BlackListDto blackListDto = new BlackListDto();
+            blackListDto.setCardId(item.getCardId());
+            blackListDto.setOperation(OperationEnum.INSERT);
+            return blackListDto;
+        }).toList();
+        response.setBlackListDtos(blackListDtos);
         return response;
     }
 

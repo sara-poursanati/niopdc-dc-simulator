@@ -22,6 +22,6 @@ public class LoggingAspect {
     public void logBefore(JoinPoint joinPoint) {
         Object[] args = joinPoint.getArgs();
         String methodName = joinPoint.getSignature().getName();
-        log.info("Method execution started {}() - {}", methodName, Arrays.toString(args));
+        //log.info("Method execution started {}() - {}", methodName, Arrays.toString(args));
     }
 }

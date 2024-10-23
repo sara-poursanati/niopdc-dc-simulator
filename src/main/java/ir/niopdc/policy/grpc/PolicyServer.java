@@ -2,8 +2,12 @@ package ir.niopdc.policy.grpc;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
+import ir.niopdc.common.entity.policy.BlackListDto;
+import ir.niopdc.common.entity.policy.OperationEnum;
 import ir.niopdc.common.grpc.policy.*;
+import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
+import ir.niopdc.policy.dto.BlackListResponseDto;
 import ir.niopdc.policy.facade.PolicyFacade;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +15,9 @@ import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
@@ -27,11 +33,18 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Value("${app.chunkSize}")
     private int chunkSize;
 
+    private AppConfig appConfig;
+
     private PolicyFacade policyFacade;
 
     @Autowired
     public void setPolicyFacade(PolicyFacade policyFacade) {
         this.policyFacade = policyFacade;
+    }
+
+    @Autowired
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
     }
 
     @Override
@@ -92,7 +105,16 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         sendCsvFile(responseObserver, dto);
     }
 
-    private void sendDifferentialBlackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
+    private void sendDifferentialBlackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        BlackListResponseDto blackListResponseDto = policyFacade.getDifferentialBlackList(request);
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
+            objectOutputStream.writeObject(blackListResponseDto.getBlackListDtos());
+            byte[] fileBytes = outputStream.toByteArray();
+            responseObserver.onNext(FilePolicyResponse
+                    .newBuilder()
+                    .setMetadata(blackListResponseDto.getMetadata())
+                    .setFile(ByteString.copyFrom(fileBytes)).build());
+        }
     }
 
     private void sendCsvFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
@@ -101,14 +123,19 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
                 .setMetadata(dto.getMetadata()).build());
         try (Stream<String> stream = Files.lines(dto.getFile(), StandardCharsets.UTF_8)) {
             Spliterator<String> split = stream.spliterator();
-
             while (true) {
                 List<String> chunk = getChunk(split);
                 if (chunk.isEmpty()) {
                     break;
                 }
-                String item = String.join("", chunk);
-                responseObserver.onNext(FilePolicyResponse.newBuilder().setFile(ByteString.copyFromUtf8(item)).build());
+                List<BlackListDto> blackListDtos = chunk.stream().map(this::convertFromCsv).toList();
+                try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
+                    objectOutputStream.writeObject(blackListDtos);
+                    byte[] fileBytes = outputStream.toByteArray();
+                    responseObserver.onNext(FilePolicyResponse.newBuilder().setFile(ByteString.copyFrom(fileBytes)).build());
+                } catch (IOException exp) {
+                    log.error(exp.getMessage(), exp);
+                }
             }
         }
         responseObserver.onCompleted();
@@ -139,6 +166,14 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
 
         responseObserver.onCompleted();
         log.info("Sending file ended at {}", LocalDateTime.now());
+    }
+
+    private BlackListDto convertFromCsv(String blackListCsv) {
+        String[] split = blackListCsv.split(appConfig.getCsvDelimiter());
+        BlackListDto result = new BlackListDto();
+        result.setCardId(split[0]);
+        result.setOperation(OperationEnum.getByValue(Byte.parseByte(split[1])));
+        return result;
     }
 
 }
