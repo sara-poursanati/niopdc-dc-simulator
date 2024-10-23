@@ -165,7 +165,7 @@ public class PolicyFacade {
     }
 
     public FilePolicyResponseDto getGrayListPolicy() {
-        PolicyMetadata metadata = loadMetadata(new PolicyVersion());
+        PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
         Path filePath = Path.of(grayListPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
