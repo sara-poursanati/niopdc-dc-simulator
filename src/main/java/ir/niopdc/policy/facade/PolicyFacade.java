@@ -1,6 +1,7 @@
 package ir.niopdc.policy.facade;
 
 import ir.niopdc.common.entity.policy.BlackListDto;
+import ir.niopdc.common.entity.policy.CodingDto;
 import ir.niopdc.common.entity.policy.OperationEnum;
 import ir.niopdc.common.entity.policy.PolicyEnum;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
@@ -9,6 +10,8 @@ import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.common.grpc.policy.RegionalQuotaResponse;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
+import ir.niopdc.policy.domain.coding.CodingList;
+import ir.niopdc.policy.domain.coding.CodingListService;
 import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;
@@ -21,7 +24,7 @@ import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
 import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
-import ir.niopdc.policy.dto.BlackListResponseDto;
+import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +61,7 @@ public class PolicyFacade {
     private PolicyVersionService policyVersionService;
     private FuelRateService fuelRateService;
     private BlackListService blackListService;
+    private CodingListService codingListService;
 
     @Autowired
     public void setFuelService(FuelService fuelService) {
@@ -125,7 +129,7 @@ public class PolicyFacade {
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
-    public BlackListResponseDto getDifferentialBlackList(PolicyRequest request) {
+    public ListResponseDto getDifferentialBlackList(PolicyRequest request) {
         ZonedDateTime lastOperationTime = GrpcUtils.convertToZonedDateTime(request.getLastOperationDate());
         List<BlackList> blackLists = blackListService.findByOperationDateAfter(lastOperationTime);
         Optional<ZonedDateTime> maxOperationDateTime = blackLists
@@ -139,11 +143,25 @@ public class PolicyFacade {
         return getBlackListResponseDto(metadata, blackLists);
     }
 
-    public FilePolicyResponseDto getCodingPolicy() {
+    public FilePolicyResponseDto getCompleteCodingList() {
         PolicyMetadata metadata = loadMetadata(new PolicyVersion());
         Path filePath = Path.of(codingListPath);
 
         return getFilePolicyResponseDto(metadata, filePath);
+    }
+
+    public ListResponseDto getDifferentialCodingList(PolicyRequest request) {
+        ZonedDateTime lastOperationTime = GrpcUtils.convertToZonedDateTime(request.getLastOperationDate());
+        List<CodingList> codingLists = codingListService.findByOperationDateAfter(lastOperationTime);
+        Optional<ZonedDateTime> maxOperationDateTime = codingLists
+                .stream()
+                .map(CodingList::getInsertionDateTime)
+                .max(ZonedDateTime::compareTo);
+        ZonedDateTime latestOperationDate = maxOperationDateTime.orElse(lastOperationTime);
+
+        PolicyMetadata metadata = loadMetadataByOperationDate(PolicyEnum.CODING, latestOperationDate);
+
+        return getCodingListResponseDto(metadata, codingLists);
     }
 
     public FilePolicyResponseDto getGrayListPolicy() {
@@ -213,8 +231,8 @@ public class PolicyFacade {
         return response;
     }
 
-    private BlackListResponseDto getBlackListResponseDto(PolicyMetadata metadata, List<BlackList> blackLists) {
-        BlackListResponseDto response = new BlackListResponseDto();
+    private ListResponseDto getBlackListResponseDto(PolicyMetadata metadata, List<BlackList> blackLists) {
+        ListResponseDto response = new ListResponseDto();
         response.setMetadata(metadata);
         List<BlackListDto> blackListDtos = blackLists.stream().map(item ->
         {
@@ -223,12 +241,31 @@ public class PolicyFacade {
             blackListDto.setOperation(OperationEnum.INSERT);
             return blackListDto;
         }).toList();
-        response.setBlackListDtos(blackListDtos);
+        response.setObjects(blackListDtos);
+        return response;
+    }
+
+    private ListResponseDto getCodingListResponseDto(PolicyMetadata metadata, List<CodingList> codingLists) {
+        ListResponseDto response = new ListResponseDto();
+        response.setMetadata(metadata);
+        List<CodingDto> codingDtos = codingLists.stream().map(item ->
+        {
+            CodingDto codingDto = new CodingDto();
+            codingDto.setCardId(item.getCardId());
+            codingDto.setOperation(OperationEnum.INSERT);
+            return codingDto;
+        }).toList();
+        response.setObjects(codingDtos);
         return response;
     }
 
     @Autowired
     public void setBlackListService(BlackListService blackListService) {
         this.blackListService = blackListService;
+    }
+
+    @Autowired
+    public void setCodingListService(CodingListService codingListService) {
+        this.codingListService = codingListService;
     }
 }

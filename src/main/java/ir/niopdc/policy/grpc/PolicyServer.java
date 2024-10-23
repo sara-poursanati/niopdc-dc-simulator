@@ -7,7 +7,7 @@ import ir.niopdc.common.entity.policy.OperationEnum;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
-import ir.niopdc.policy.dto.BlackListResponseDto;
+import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.facade.PolicyFacade;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -89,8 +89,11 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     @SneakyThrows
     public void coding(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        FilePolicyResponseDto dto = policyFacade.getCodingPolicy();
-        sendCsvFile(responseObserver, dto);
+        if (request.getMode() == ModeEnumMessage.CONFIG) {
+            sendCompleteCodingList(responseObserver);
+        } else {
+            sendDifferentialCodingList(request, responseObserver);
+        }
     }
 
     @Override
@@ -105,16 +108,9 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         sendCsvFile(responseObserver, dto);
     }
 
-    private void sendDifferentialBlackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
-        BlackListResponseDto blackListResponseDto = policyFacade.getDifferentialBlackList(request);
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
-            objectOutputStream.writeObject(blackListResponseDto.getBlackListDtos());
-            byte[] fileBytes = outputStream.toByteArray();
-            responseObserver.onNext(FilePolicyResponse
-                    .newBuilder()
-                    .setMetadata(blackListResponseDto.getMetadata())
-                    .setFile(ByteString.copyFrom(fileBytes)).build());
-        }
+    private void sendCompleteCodingList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        FilePolicyResponseDto dto = policyFacade.getCompleteCodingList();
+        sendCsvFile(responseObserver, dto);
     }
 
     private void sendCsvFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
@@ -152,6 +148,14 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         return chunk;
     }
 
+    private BlackListDto convertFromCsv(String blackListCsv) {
+        String[] split = blackListCsv.split(appConfig.getCsvDelimiter());
+        BlackListDto result = new BlackListDto();
+        result.setCardId(split[0]);
+        result.setOperation(OperationEnum.getByValue(Byte.parseByte(split[1])));
+        return result;
+    }
+
     private static void sendBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
         log.info("Sending file started at {}", LocalDateTime.now());
 
@@ -168,12 +172,24 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         log.info("Sending file ended at {}", LocalDateTime.now());
     }
 
-    private BlackListDto convertFromCsv(String blackListCsv) {
-        String[] split = blackListCsv.split(appConfig.getCsvDelimiter());
-        BlackListDto result = new BlackListDto();
-        result.setCardId(split[0]);
-        result.setOperation(OperationEnum.getByValue(Byte.parseByte(split[1])));
-        return result;
+    private void sendDifferentialBlackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        ListResponseDto listResponseDto = policyFacade.getDifferentialBlackList(request);
+        sendDifferentialList(listResponseDto, responseObserver);
     }
 
+    private void sendDifferentialCodingList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        ListResponseDto listResponseDto = policyFacade.getDifferentialCodingList(request);
+        sendDifferentialList(listResponseDto, responseObserver);
+    }
+
+    private void sendDifferentialList(ListResponseDto listResponseDto, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
+            objectOutputStream.writeObject(listResponseDto.getObjects());
+            byte[] fileBytes = outputStream.toByteArray();
+            responseObserver.onNext(FilePolicyResponse
+                    .newBuilder()
+                    .setMetadata(listResponseDto.getMetadata())
+                    .setFile(ByteString.copyFrom(fileBytes)).build());
+        }
+    }
 }

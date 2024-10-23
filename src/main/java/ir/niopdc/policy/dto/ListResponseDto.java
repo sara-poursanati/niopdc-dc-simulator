@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class BlackListResponseDto {
+public class ListResponseDto {
     private PolicyMetadata metadata;
-    private List<BlackListDto> blackListDtos;
+    private List<?> objects;
 }
