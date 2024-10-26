@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "coding_list")
@@ -20,5 +21,5 @@ public class CodingList {
 
     @Id
     private String cardId;
-    private LocalDateTime insertionDateTime;
+    private ZonedDateTime insertionDateTime;
 }

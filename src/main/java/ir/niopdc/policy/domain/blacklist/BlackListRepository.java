@@ -7,6 +7,8 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
@@ -16,6 +18,8 @@ interface BlackListRepository extends ListCrudRepository<BlackList, String> {
     @Query("select b from BlackList b")
     Stream<BlackList> streamAll();
 
+    List<BlackList> findByInsertionDateTimeAfter(ZonedDateTime insertionDateTime);
+
     @Query("SELECT b FROM BlackList b WHERE b.insertionDateTime > :time ORDER BY b.insertionDateTime ASC")
-    Page<BlackList> findAllByInsertionDateTimeAfter(@Param("time") LocalDateTime time, Pageable pageable);
+    Page<BlackList> findAllByInsertionDateTimeAfter(@Param("time") ZonedDateTime time, Pageable pageable);
 }

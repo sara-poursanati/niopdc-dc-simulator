@@ -15,7 +15,10 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,10 +56,8 @@ public class BlackListExporter {
       writer.write(CSV_HEADER);
 
       Page<BlackList> page;
-      Timestamp timestamp = new Timestamp(0);
-
       do {
-        page = fetchPage(timestamp.toLocalDateTime(), pageNumber);
+        page = fetchPage(Instant.now().atZone(ZoneId.systemDefault()), pageNumber);
         String csvContent = convertPageToCsv(page);
         writer.write(csvContent);
         log.info("Processed page: {}. at: {}", pageNumber, System.currentTimeMillis());
@@ -77,7 +78,7 @@ public class BlackListExporter {
     }
   }
 
-  private Page<BlackList> fetchPage(LocalDateTime timestamp, int pageNumber) {
+  private Page<BlackList> fetchPage(ZonedDateTime timestamp, int pageNumber) {
     try {
       return blackListService.fetchPageAfter(timestamp, PageRequest.of(pageNumber, chunkSize));
     } catch (DataAccessException ex) {

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "black_list")
@@ -20,5 +20,5 @@ public class BlackList {
 
     @Id
     private String cardId;
-    private LocalDateTime insertionDateTime;
+    private ZonedDateTime insertionDateTime;
 }
