@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -30,6 +31,7 @@ public class BlackListExporter {
   @Scheduled(
           fixedDelayString = "${csv.config.fixedDelay}",
           initialDelayString = "${csv.config.initialDelay}")
+  @Transactional(readOnly = true)
   public void runCsvExportTask() {
     try {
       log.info("Initializing blackLists CSV export");
