@@ -154,13 +154,6 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
                     break;
                 }
                 List<BlackListDto> blackListDtos = chunk.stream().map(this::convertBlackListFromCsv).toList();
-//                ArrayList<BlackListDto> blackListDtos = new ArrayList<>();
-//                for (int j = 0; j < 10000; j++) {
-//                    BlackListDto blackListDto = new BlackListDto();
-//                    blackListDto.setCardId(RandomStringUtils.randomNumeric(10));
-//                    blackListDto.setOperation(ir.niopdc.common.entity.policy.OperationEnum.INSERT);
-//                    blackListDtos.add(blackListDto);
-//                }
                 try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
                     objectOutputStream.writeObject(blackListDtos);
                     byte[] fileBytes = outputStream.toByteArray();
