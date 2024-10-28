@@ -8,6 +8,7 @@ import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.PolicyRequest;
 import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.common.grpc.policy.RegionalQuotaResponse;
+import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.coding.CodingList;
@@ -27,7 +28,6 @@ import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,22 +39,7 @@ import java.util.Optional;
 
 @Service
 public class PolicyFacade {
-
-    @Value("${app.nationalQuota.path}")
-    private String nationalQuotaPath;
-
-    @Value("${app.terminalApp.path}")
-    private String terminalAppPath;
-
-    @Value("${app.blackList.path}")
-    private String blackListPath;
-
-    @Value("${app.codingList.path}")
-    private String codingListPath;
-
-    @Value("${app.grayList.path}")
-    private String grayListPath;
-
+    private AppConfig appConfig;
     private FuelService fuelService;
     private RegionalQuotaRuleService regionalQuotaRuleService;
     private PolicyService policyService;
@@ -98,6 +83,10 @@ public class PolicyFacade {
         this.codingListService = codingListService;
     }
 
+    @Autowired
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
 
     @Transactional
     public RateResponse getFuelRatePolicy(PolicyRequest request) {
@@ -114,7 +103,7 @@ public class PolicyFacade {
     public FilePolicyResponseDto getNationalQuotaPolicy(PolicyRequest request) {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.NATIONAL_QUOTA);
         if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
-            Path filePath = Path.of(nationalQuotaPath);
+            Path filePath = Path.of(appConfig.getNationalQuotaPath());
             return getFilePolicyResponseDto(metadata, filePath);
         } else {
             return getFilePolicyResponseDto(metadata);
@@ -134,7 +123,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getCompleteBlackList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.BLACK_LIST);
-        Path filePath = Path.of(blackListPath);
+        Path filePath = Path.of(appConfig.getBlackListPath());
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
@@ -155,7 +144,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getCompleteCodingList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.CODING);
-        Path filePath = Path.of(codingListPath);
+        Path filePath = Path.of(appConfig.getCodingListPath());
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
@@ -176,7 +165,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getGrayListPolicy() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
-        Path filePath = Path.of(grayListPath);
+        Path filePath = Path.of(appConfig.getGrayListPath());
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
@@ -184,7 +173,7 @@ public class PolicyFacade {
     public FilePolicyResponseDto getTerminalSoftware(PolicyRequest request) {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.APP);
         if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
-            Path filePath = Path.of(terminalAppPath);
+            Path filePath = Path.of(appConfig.getTerminalAppPath());
             return getFilePolicyResponseDto(metadata, filePath);
         } else {
             return getFilePolicyResponseDto(metadata);

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
@@ -23,4 +24,9 @@ public class AppConfig {
     private String csvDelimiter;
     private String csvLineSeparator;
     private int chunkSize;
+    private String nationalQuotaPath;
+    private String terminalAppPath;
+    private String blackListPath;
+    private String codingListPath;
+    private String grayListPath;
 }
