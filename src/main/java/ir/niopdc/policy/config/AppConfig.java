@@ -22,4 +22,5 @@ public class AppConfig {
     private String csvQuote;
     private String csvDelimiter;
     private String csvLineSeparator;
+    private int chunkSize;
 }
