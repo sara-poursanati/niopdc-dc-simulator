@@ -48,46 +48,6 @@ public class PolicyFacade {
     private BlackListService blackListService;
     private CodingListService codingListService;
 
-    @Autowired
-    public void setFuelService(FuelService fuelService) {
-        this.fuelService = fuelService;
-    }
-
-    @Autowired
-    public void setRegionalQuotaRuleService(RegionalQuotaRuleService regionalQuotaRuleService) {
-        this.regionalQuotaRuleService = regionalQuotaRuleService;
-    }
-
-    @Autowired
-    public void setPolicyService(PolicyService policyService) {
-        this.policyService = policyService;
-    }
-
-    @Autowired
-    public void setPolicyVersionService(PolicyVersionService policyVersionService) {
-        this.policyVersionService = policyVersionService;
-    }
-
-    @Autowired
-    public void setFuelRateService(FuelRateService fuelRateService) {
-        this.fuelRateService = fuelRateService;
-    }
-
-    @Autowired
-    public void setBlackListService(BlackListService blackListService) {
-        this.blackListService = blackListService;
-    }
-
-    @Autowired
-    public void setCodingListService(CodingListService codingListService) {
-        this.codingListService = codingListService;
-    }
-
-    @Autowired
-    public void setAppConfig(AppConfig appConfig) {
-        this.appConfig = appConfig;
-    }
-
     @Transactional
     public RateResponse getFuelRatePolicy(PolicyRequest request) {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.RATE);
@@ -256,5 +216,45 @@ public class PolicyFacade {
         }).toList();
         response.setObjects(codingDtos);
         return response;
+    }
+
+    @Autowired
+    public void setFuelService(FuelService fuelService) {
+        this.fuelService = fuelService;
+    }
+
+    @Autowired
+    public void setRegionalQuotaRuleService(RegionalQuotaRuleService regionalQuotaRuleService) {
+        this.regionalQuotaRuleService = regionalQuotaRuleService;
+    }
+
+    @Autowired
+    public void setPolicyService(PolicyService policyService) {
+        this.policyService = policyService;
+    }
+
+    @Autowired
+    public void setPolicyVersionService(PolicyVersionService policyVersionService) {
+        this.policyVersionService = policyVersionService;
+    }
+
+    @Autowired
+    public void setFuelRateService(FuelRateService fuelRateService) {
+        this.fuelRateService = fuelRateService;
+    }
+
+    @Autowired
+    public void setBlackListService(BlackListService blackListService) {
+        this.blackListService = blackListService;
+    }
+
+    @Autowired
+    public void setCodingListService(CodingListService codingListService) {
+        this.codingListService = codingListService;
+    }
+
+    @Autowired
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
     }
 }
