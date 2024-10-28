@@ -88,6 +88,16 @@ public class PolicyFacade {
         this.fuelRateService = fuelRateService;
     }
 
+    @Autowired
+    public void setBlackListService(BlackListService blackListService) {
+        this.blackListService = blackListService;
+    }
+
+    @Autowired
+    public void setCodingListService(CodingListService codingListService) {
+        this.codingListService = codingListService;
+    }
+
 
     @Transactional
     public RateResponse getFuelRatePolicy(PolicyRequest request) {
@@ -257,15 +267,5 @@ public class PolicyFacade {
         }).toList();
         response.setObjects(codingDtos);
         return response;
-    }
-
-    @Autowired
-    public void setBlackListService(BlackListService blackListService) {
-        this.blackListService = blackListService;
-    }
-
-    @Autowired
-    public void setCodingListService(CodingListService codingListService) {
-        this.codingListService = codingListService;
     }
 }
