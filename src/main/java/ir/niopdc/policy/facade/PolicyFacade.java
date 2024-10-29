@@ -1,9 +1,6 @@
 package ir.niopdc.policy.facade;
 
-import ir.niopdc.common.entity.policy.BlackListDto;
-import ir.niopdc.common.entity.policy.CodingDto;
-import ir.niopdc.common.entity.policy.OperationEnum;
-import ir.niopdc.common.entity.policy.PolicyEnum;
+import ir.niopdc.common.entity.policy.*;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.PolicyRequest;
 import ir.niopdc.common.grpc.policy.RateResponse;
@@ -17,6 +14,8 @@ import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;
 import ir.niopdc.policy.domain.fuelrate.FuelRateService;
+import ir.niopdc.policy.domain.graylist.GrayList;
+import ir.niopdc.policy.domain.graylist.GrayListService;
 import ir.niopdc.policy.domain.policy.Policy;
 import ir.niopdc.policy.domain.policy.PolicyService;
 import ir.niopdc.policy.domain.policyversion.PolicyVersion;
@@ -47,6 +46,7 @@ public class PolicyFacade {
     private FuelRateService fuelRateService;
     private BlackListService blackListService;
     private CodingListService codingListService;
+    private GrayListService grayListService;
 
     @Transactional
     public RateResponse getFuelRatePolicy(PolicyRequest request) {
@@ -123,11 +123,25 @@ public class PolicyFacade {
         return getCodingListResponseDto(metadata, codingLists);
     }
 
-    public FilePolicyResponseDto getGrayListPolicy() {
+    public FilePolicyResponseDto getCompleteGrayList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
-        Path filePath = Path.of(appConfig.getGrayListPath());
+        Path filePath = Path.of(appConfig.getCodingListPath());
 
         return getFilePolicyResponseDto(metadata, filePath);
+    }
+
+    public ListResponseDto getDifferentialGrayList(PolicyRequest request) {
+        ZonedDateTime lastOperationTime = GrpcUtils.convertToZonedDateTime(request.getLastOperationDate());
+        List<GrayList> grayLists = grayListService.findByOperationDateAfter(lastOperationTime);
+        Optional<ZonedDateTime> maxOperationDateTime = grayLists
+                .stream()
+                .map(GrayList::getInsertionDateTime)
+                .max(ZonedDateTime::compareTo);
+        ZonedDateTime latestOperationDate = maxOperationDateTime.orElse(lastOperationTime);
+
+        PolicyMetadata metadata = loadMetadataByOperationDate(PolicyEnum.GRAY_LIST, latestOperationDate);
+
+        return getGrayListResponseDto(metadata, grayLists);
     }
 
     public FilePolicyResponseDto getTerminalSoftware(PolicyRequest request) {
@@ -218,6 +232,22 @@ public class PolicyFacade {
         return response;
     }
 
+    private ListResponseDto getGrayListResponseDto(PolicyMetadata metadata, List<GrayList> grayLists) {
+        ListResponseDto response = new ListResponseDto();
+        response.setMetadata(metadata);
+        List<GrayListDto> grayListDtos = grayLists.stream().map(item ->
+        {
+            GrayListDto grayListDto = new GrayListDto();
+            grayListDto.setCardId(item.getCardId());
+            grayListDto.setReason(item.getReason());
+            grayListDto.setType(item.getType());
+            grayListDto.setOperation(OperationEnum.INSERT);
+            return grayListDto;
+        }).toList();
+        response.setObjects(grayListDtos);
+        return response;
+    }
+
     @Autowired
     public void setFuelService(FuelService fuelService) {
         this.fuelService = fuelService;
@@ -256,5 +286,10 @@ public class PolicyFacade {
     @Autowired
     public void setAppConfig(AppConfig appConfig) {
         this.appConfig = appConfig;
+    }
+
+    @Autowired
+    public void setGrayListService(GrayListService grayListService) {
+        this.grayListService = grayListService;
     }
 }

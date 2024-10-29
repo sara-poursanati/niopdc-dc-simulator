@@ -2,6 +2,7 @@ package ir.niopdc.policy.grpc;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
+import ir.niopdc.common.entity.policy.BlackListDto;
 import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
@@ -10,17 +11,18 @@ import ir.niopdc.policy.facade.PolicyFacade;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterator;
+import java.util.stream.Stream;
 
 @GrpcService
 @Slf4j
@@ -100,32 +102,33 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     }
 
     private void sendCompleteGrayList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
-//        FilePolicyResponseDto dto = policyFacade.getCompleteGrayList();
-//        sendBinaryFile(responseObserver, dto);
-    }
-
-    private void sendDifferentialGrayList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
+        FilePolicyResponseDto dto = policyFacade.getCompleteGrayList();
+        sendChunkedBinaryFile(responseObserver, dto);
     }
 
     private void sendCompleteBlackList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
         FilePolicyResponseDto dto = policyFacade.getCompleteBlackList();
-        sendBinaryFile(responseObserver, dto);
+        sendChunkedBinaryFile(responseObserver, dto);
     }
 
     private void sendCompleteCodingList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
         FilePolicyResponseDto dto = policyFacade.getCompleteCodingList();
-        sendBinaryFile(responseObserver, dto);
+        sendChunkedBinaryFile(responseObserver, dto);
     }
 
-    private List<String> getChunk(Spliterator<String> split) {
-        int chunkSize = appConfig.getChunkSize();
-        List<String> chunk = new ArrayList<>(chunkSize);
-        for (int index = 0; index < chunkSize; index++) {
-            if (!split.tryAdvance(chunk::add)) {
-                break;
-            }
-        }
-        return chunk;
+    private void sendDifferentialBlackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        ListResponseDto listResponseDto = policyFacade.getDifferentialBlackList(request);
+        sendDifferentialList(listResponseDto, responseObserver);
+    }
+
+    private void sendDifferentialCodingList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        ListResponseDto listResponseDto = policyFacade.getDifferentialCodingList(request);
+        sendDifferentialList(listResponseDto, responseObserver);
+    }
+
+    private void sendDifferentialGrayList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+        ListResponseDto listResponseDto = policyFacade.getDifferentialGrayList(request);
+        sendDifferentialList(listResponseDto, responseObserver);
     }
 
     private static void sendBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
@@ -144,20 +147,19 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         log.info("Sending file ended at {}", LocalDateTime.now());
     }
 
-    private void sendDifferentialBlackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
-        ListResponseDto listResponseDto = policyFacade.getDifferentialBlackList(request);
-        sendDifferentialList(listResponseDto, responseObserver);
+    private void sendChunkedBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
+        log.info("Sending file {} started at {}", dto.getFile().toString(), LocalDateTime.now());
+        responseObserver.onNext(FilePolicyResponse.newBuilder()
+                .setMetadata(dto.getMetadata()).build());
+        try (InputStream input = new FileInputStream(dto.getFile().toFile())) {
+            byte[] bytes = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+            while (IOUtils.read(input, bytes) > 0) {
+                responseObserver.onNext(FilePolicyResponse.newBuilder().setFile(ByteString.copyFrom(bytes)).build());
+            }
+        }
+        responseObserver.onCompleted();
+        log.info("Sending file ended at {}", LocalDateTime.now());
     }
-
-    private void sendDifferentialCodingList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
-        ListResponseDto listResponseDto = policyFacade.getDifferentialCodingList(request);
-        sendDifferentialList(listResponseDto, responseObserver);
-    }
-
-//    private void sendDifferentialGrayList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
-//        ListResponseDto listResponseDto = policyFacade.getDifferentialGrayList(request);
-//        sendDifferentialList(listResponseDto, responseObserver);
-//    }
 
     private void sendDifferentialList(ListResponseDto listResponseDto, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
