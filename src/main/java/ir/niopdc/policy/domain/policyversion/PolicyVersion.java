@@ -3,9 +3,7 @@ package ir.niopdc.policy.domain.policyversion;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.ZonedDateTime;
 
@@ -14,6 +12,9 @@ import java.time.ZonedDateTime;
 @Getter
 @Setter
 @ToString
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class PolicyVersion {
 
     @EmbeddedId
@@ -21,5 +22,4 @@ public class PolicyVersion {
     private String versionName;
     private ZonedDateTime releaseTime;
     private ZonedDateTime activationTime;
-
 }
