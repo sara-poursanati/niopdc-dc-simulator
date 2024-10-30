@@ -5,6 +5,7 @@ import ir.niopdc.common.grpc.policy.BlackListCardInfo;
 import ir.niopdc.common.grpc.policy.BlackListResponse;
 import ir.niopdc.common.grpc.policy.OperationEnumMessage;
 import ir.niopdc.common.util.FileUtil;
+import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.policy.Policy;
@@ -32,35 +33,33 @@ public class BlackListExporter {
   private final BlackListService blackListService;
   private final PolicyVersionService policyVersionService;
   private final PolicyService policyService;
-
-  @Value("${app.black-list-path}")
-  private String blackListPath;
+  private final AppConfig appConfig;
 
   @Scheduled(
       fixedDelayString = "${csv.config.fixedDelay}",
       initialDelayString = "${csv.config.initialDelay}")
   @Transactional
   public void runCsvExportTask() {
-    log.info("Initializing blackLists CSV export");
+    log.info("Initializing blackLists export");
 
     String newVersion = getNextPolicyVersion();
     String fileName = createFileName(newVersion);
 
     try {
-      BlackList lastRecord = exportBlackList(blackListPath + fileName);
+      BlackList lastRecord = exportBlackList( appConfig.getBlackListPath() + fileName);
       processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (IOException e) {
-      log.error("Failed to export blackLists CSV", e);
+      log.error("Failed to export blackList", e);
     }
   }
 
   private BlackList exportBlackList(String filePath) throws IOException {
-    log.info("Starting blackLists export");
+    log.info("Starting blackList export");
 
     AtomicReference<BlackList> lastBlackListRecord = new AtomicReference<>();
     ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
 
-    try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
+    try (Stream<BlackList> blackListStream = blackListService.streamAllMinusWhiteList()) {
       blackListStream.forEach(
           blackList -> {
             blackListCardInfos.add(createBlackListCardInfo(blackList));
@@ -70,8 +69,8 @@ public class BlackListExporter {
       BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
       FileUtil.createZipFile(filePath, response.toByteArray());
 
+      log.info("Finishing blackList export with {} records", blackListCardInfos.size());
       log.info("lastBlackListRecord = {}", lastBlackListRecord);
-      log.info("Finished blackLists export with {} records", blackListCardInfos.size());
     }
     return lastBlackListRecord.get();
   }
