@@ -1,13 +1,11 @@
 package ir.niopdc.policy.facade;
 
-import ir.niopdc.common.entity.policy.BlackListDto;
-import ir.niopdc.common.entity.policy.CodingDto;
-import ir.niopdc.common.entity.policy.OperationEnum;
-import ir.niopdc.common.entity.policy.PolicyEnum;
+import ir.niopdc.common.entity.policy.*;
 import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.PolicyRequest;
 import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.common.grpc.policy.RegionalQuotaResponse;
+import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.coding.CodingList;
@@ -16,6 +14,8 @@ import ir.niopdc.policy.domain.fuel.Fuel;
 import ir.niopdc.policy.domain.fuel.FuelService;
 import ir.niopdc.policy.domain.fuelrate.FuelRate;
 import ir.niopdc.policy.domain.fuelrate.FuelRateService;
+import ir.niopdc.policy.domain.graylist.GrayList;
+import ir.niopdc.policy.domain.graylist.GrayListService;
 import ir.niopdc.policy.domain.policy.Policy;
 import ir.niopdc.policy.domain.policy.PolicyService;
 import ir.niopdc.policy.domain.policyversion.PolicyVersion;
@@ -27,7 +27,6 @@ import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,22 +38,7 @@ import java.util.Optional;
 
 @Service
 public class PolicyFacade {
-
-    @Value("${app.nationalQuota.path}")
-    private String nationalQuotaPath;
-
-    @Value("${app.terminalApp.path}")
-    private String terminalAppPath;
-
-    @Value("${app.blackList.path}")
-    private String blackListPath;
-
-    @Value("${app.codingList.path}")
-    private String codingListPath;
-
-    @Value("${app.grayList.path}")
-    private String grayListPath;
-
+    private AppConfig appConfig;
     private FuelService fuelService;
     private RegionalQuotaRuleService regionalQuotaRuleService;
     private PolicyService policyService;
@@ -62,32 +46,7 @@ public class PolicyFacade {
     private FuelRateService fuelRateService;
     private BlackListService blackListService;
     private CodingListService codingListService;
-
-    @Autowired
-    public void setFuelService(FuelService fuelService) {
-        this.fuelService = fuelService;
-    }
-
-    @Autowired
-    public void setRegionalQuotaRuleService(RegionalQuotaRuleService regionalQuotaRuleService) {
-        this.regionalQuotaRuleService = regionalQuotaRuleService;
-    }
-
-    @Autowired
-    public void setPolicyService(PolicyService policyService) {
-        this.policyService = policyService;
-    }
-
-    @Autowired
-    public void setPolicyVersionService(PolicyVersionService policyVersionService) {
-        this.policyVersionService = policyVersionService;
-    }
-
-    @Autowired
-    public void setFuelRateService(FuelRateService fuelRateService) {
-        this.fuelRateService = fuelRateService;
-    }
-
+    private GrayListService grayListService;
 
     @Transactional
     public RateResponse getFuelRatePolicy(PolicyRequest request) {
@@ -104,7 +63,7 @@ public class PolicyFacade {
     public FilePolicyResponseDto getNationalQuotaPolicy(PolicyRequest request) {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.NATIONAL_QUOTA);
         if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
-            Path filePath = Path.of(nationalQuotaPath);
+            Path filePath = Path.of(appConfig.getNationalQuotaPath());
             return getFilePolicyResponseDto(metadata, filePath);
         } else {
             return getFilePolicyResponseDto(metadata);
@@ -124,7 +83,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getCompleteBlackList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.BLACK_LIST);
-        Path filePath = Path.of(blackListPath);
+        Path filePath = Path.of(appConfig.getBlackListPath());
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
@@ -145,7 +104,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getCompleteCodingList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.CODING);
-        Path filePath = Path.of(codingListPath);
+        Path filePath = Path.of(appConfig.getCodingListPath());
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
@@ -164,17 +123,31 @@ public class PolicyFacade {
         return getCodingListResponseDto(metadata, codingLists);
     }
 
-    public FilePolicyResponseDto getGrayListPolicy() {
+    public FilePolicyResponseDto getCompleteGrayList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
-        Path filePath = Path.of(grayListPath);
+        Path filePath = Path.of(appConfig.getCodingListPath());
 
         return getFilePolicyResponseDto(metadata, filePath);
+    }
+
+    public ListResponseDto getDifferentialGrayList(PolicyRequest request) {
+        ZonedDateTime lastOperationTime = GrpcUtils.convertToZonedDateTime(request.getLastOperationDate());
+        List<GrayList> grayLists = grayListService.findByOperationDateAfter(lastOperationTime);
+        Optional<ZonedDateTime> maxOperationDateTime = grayLists
+                .stream()
+                .map(GrayList::getInsertionDateTime)
+                .max(ZonedDateTime::compareTo);
+        ZonedDateTime latestOperationDate = maxOperationDateTime.orElse(lastOperationTime);
+
+        PolicyMetadata metadata = loadMetadataByOperationDate(PolicyEnum.GRAY_LIST, latestOperationDate);
+
+        return getGrayListResponseDto(metadata, grayLists);
     }
 
     public FilePolicyResponseDto getTerminalSoftware(PolicyRequest request) {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.APP);
         if (isNotUpdated(request.getVersion(), metadata.getVersion())) {
-            Path filePath = Path.of(terminalAppPath);
+            Path filePath = Path.of(appConfig.getTerminalAppPath());
             return getFilePolicyResponseDto(metadata, filePath);
         } else {
             return getFilePolicyResponseDto(metadata);
@@ -259,6 +232,47 @@ public class PolicyFacade {
         return response;
     }
 
+    private ListResponseDto getGrayListResponseDto(PolicyMetadata metadata, List<GrayList> grayLists) {
+        ListResponseDto response = new ListResponseDto();
+        response.setMetadata(metadata);
+        List<GrayListDto> grayListDtos = grayLists.stream().map(item ->
+        {
+            GrayListDto grayListDto = new GrayListDto();
+            grayListDto.setCardId(item.getCardId());
+            grayListDto.setReason(item.getReason());
+            grayListDto.setType(item.getType());
+            grayListDto.setOperation(OperationEnum.INSERT);
+            return grayListDto;
+        }).toList();
+        response.setObjects(grayListDtos);
+        return response;
+    }
+
+    @Autowired
+    public void setFuelService(FuelService fuelService) {
+        this.fuelService = fuelService;
+    }
+
+    @Autowired
+    public void setRegionalQuotaRuleService(RegionalQuotaRuleService regionalQuotaRuleService) {
+        this.regionalQuotaRuleService = regionalQuotaRuleService;
+    }
+
+    @Autowired
+    public void setPolicyService(PolicyService policyService) {
+        this.policyService = policyService;
+    }
+
+    @Autowired
+    public void setPolicyVersionService(PolicyVersionService policyVersionService) {
+        this.policyVersionService = policyVersionService;
+    }
+
+    @Autowired
+    public void setFuelRateService(FuelRateService fuelRateService) {
+        this.fuelRateService = fuelRateService;
+    }
+
     @Autowired
     public void setBlackListService(BlackListService blackListService) {
         this.blackListService = blackListService;
@@ -267,5 +281,15 @@ public class PolicyFacade {
     @Autowired
     public void setCodingListService(CodingListService codingListService) {
         this.codingListService = codingListService;
+    }
+
+    @Autowired
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
+    @Autowired
+    public void setGrayListService(GrayListService grayListService) {
+        this.grayListService = grayListService;
     }
 }

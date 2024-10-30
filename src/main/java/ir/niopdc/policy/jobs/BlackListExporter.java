@@ -33,7 +33,7 @@ public class BlackListExporter {
   private final PolicyVersionService policyVersionService;
   private final PolicyService policyService;
 
-  @Value("${app.blackList.path}")
+  @Value("${app.black-list-path}")
   private String blackListPath;
 
   @Scheduled(

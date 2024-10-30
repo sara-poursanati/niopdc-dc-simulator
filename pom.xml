@@ -25,6 +25,7 @@
 		<protobuf.util.version>3.25.1</protobuf.util.version>
 		<jackson.version>2.17.2</jackson.version>
 		<sqlite.driver.version>3.46.1.3</sqlite.driver.version>
+		<commons.io.version>2.17.0</commons.io.version>
 	</properties>
 
 	<dependencies>
@@ -73,6 +74,11 @@
 		<dependency>
 			<groupId>org.hibernate.orm</groupId>
 			<artifactId>hibernate-community-dialects</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons.io.version}</version>
 		</dependency>
 
 		<dependency>
