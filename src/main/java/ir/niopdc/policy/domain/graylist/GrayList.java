@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "GRAY_LIST")
@@ -20,7 +21,7 @@ public class GrayList {
 
     @Id
     private String cardId;
-    private LocalDateTime type;
+    private int type;
     private int reason;
-    private LocalDateTime insertionDateTime;
+    private ZonedDateTime insertionDateTime;
 }

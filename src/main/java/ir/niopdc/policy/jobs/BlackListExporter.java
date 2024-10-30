@@ -25,7 +25,7 @@ public class BlackListExporter {
   public static final String CSV_FORMAT = "%s,%s\n";
   public static final String OPERATION_TYPE_INSERT = "0";
 
-  @Value("${app.blackList.path}")
+  @Value("${app.black-list-path}")
   private String blackListPath;
 
   @Scheduled(
