@@ -15,7 +15,6 @@ import ir.niopdc.policy.domain.policyversion.PolicyVersionKey;
 import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,14 +39,14 @@ public class BlackListExporter {
       initialDelayString = "${csv.config.initialDelay}")
   @Transactional
   public void runCsvExportTask() {
-    log.info("Initializing blackLists CSV export");
+    log.info("Initializing blackList export");
 
     String newVersion = getNextPolicyVersion();
     try {
-      BlackList lastRecord = exportBlackList(createFileName(newVersion));
+      BlackList lastRecord = exportBlackList(createFilePath(newVersion));
       processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (IOException e) {
-      log.error("Failed to export blackLists CSV", e);
+      log.error("Failed to export blackLists", e);
     }
   }
 
@@ -57,7 +56,7 @@ public class BlackListExporter {
     AtomicReference<BlackList> lastBlackListRecord = new AtomicReference<>();
     ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
 
-    try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
+    try (Stream<BlackList> blackListStream = blackListService.streamAllMinusWhiteList()) {
       blackListStream.forEach(
           blackList -> {
             blackListCardInfos.add(createBlackListCardInfo(blackList));
@@ -67,8 +66,8 @@ public class BlackListExporter {
       BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
       FileUtil.createZipFile(filePath, response.toByteArray());
 
+      log.info("Finishing blackList export with {} records", blackListCardInfos.size());
       log.info("lastBlackListRecord = {}", lastBlackListRecord);
-      log.info("Finished blackLists export with {} records", blackListCardInfos.size());
     }
     return lastBlackListRecord.get();
   }
@@ -116,8 +115,9 @@ public class BlackListExporter {
         .build();
   }
 
-  private String createFileName(String versionName) {
+  private String createFilePath(String versionName) {
     return appConfig.getBlackListPath()
+            .concat(appConfig.getBlackListPrefix())
             .concat(versionName)
             .concat(appConfig.getBlackListSuffix());
   }
