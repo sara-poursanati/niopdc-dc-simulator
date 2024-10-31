@@ -40,26 +40,24 @@ public class BlackListExporter {
       initialDelayString = "${csv.config.initialDelay}")
   @Transactional
   public void runCsvExportTask() {
-    log.info("Initializing blackLists export");
+    log.info("Initializing blackLists CSV export");
 
     String newVersion = getNextPolicyVersion();
-    String fileName = createFileName(newVersion);
-
     try {
-      BlackList lastRecord = exportBlackList( appConfig.getBlackListPath() + fileName);
+      BlackList lastRecord = exportBlackList(createFileName(newVersion));
       processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (IOException e) {
-      log.error("Failed to export blackList", e);
+      log.error("Failed to export blackLists CSV", e);
     }
   }
 
   private BlackList exportBlackList(String filePath) throws IOException {
-    log.info("Starting blackList export");
+    log.info("Starting blackLists export");
 
     AtomicReference<BlackList> lastBlackListRecord = new AtomicReference<>();
     ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
 
-    try (Stream<BlackList> blackListStream = blackListService.streamAllMinusWhiteList()) {
+    try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
       blackListStream.forEach(
           blackList -> {
             blackListCardInfos.add(createBlackListCardInfo(blackList));
@@ -69,8 +67,8 @@ public class BlackListExporter {
       BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
       FileUtil.createZipFile(filePath, response.toByteArray());
 
-      log.info("Finishing blackList export with {} records", blackListCardInfos.size());
       log.info("lastBlackListRecord = {}", lastBlackListRecord);
+      log.info("Finished blackLists export with {} records", blackListCardInfos.size());
     }
     return lastBlackListRecord.get();
   }
@@ -118,11 +116,13 @@ public class BlackListExporter {
         .build();
   }
 
-  private static String createFileName(String newVersion) {
-    return PolicyEnum.BLACK_LIST.name() + "_" + newVersion + ".zip";
+  private String createFileName(String versionName) {
+    return appConfig.getBlackListPath()
+            .concat(versionName)
+            .concat(appConfig.getBlackListSuffix());
   }
 
-  private static String generateVersionName(String version) {
-    return PolicyEnum.BLACK_LIST.name() + "_" + version;
+  private String generateVersionName(String version) {
+    return appConfig.getBlackListPrefix().concat(version);
   }
 }

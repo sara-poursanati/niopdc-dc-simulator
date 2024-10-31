@@ -27,6 +27,8 @@ public class AppConfig {
     private String nationalQuotaPath;
     private String terminalAppPath;
     private String blackListPath;
+    private String blackListPrefix;
+    private String blackListSuffix;
     private String codingListPath;
     private String grayListPath;
 }
