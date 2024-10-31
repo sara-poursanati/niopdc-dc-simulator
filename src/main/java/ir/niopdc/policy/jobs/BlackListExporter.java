@@ -43,10 +43,8 @@ public class BlackListExporter {
     log.info("Initializing blackLists CSV export");
 
     String newVersion = getNextPolicyVersion();
-    String fileName = createFileName(newVersion);
-
     try {
-      BlackList lastRecord = exportBlackList( appConfig.getBlackListPath() + fileName);
+      BlackList lastRecord = exportBlackList(createFileName(newVersion));
       processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (IOException e) {
       log.error("Failed to export blackLists CSV", e);
@@ -120,12 +118,11 @@ public class BlackListExporter {
 
   private String createFileName(String versionName) {
     return appConfig.getBlackListPath()
-            .concat(appConfig.getBlackListPrefix())
             .concat(versionName)
             .concat(appConfig.getBlackListSuffix());
   }
 
-  private static String generateVersionName(String version) {
-    return PolicyEnum.BLACK_LIST.name() + "_" + version;
+  private String generateVersionName(String version) {
+    return appConfig.getBlackListPrefix().concat(version);
   }
 }
