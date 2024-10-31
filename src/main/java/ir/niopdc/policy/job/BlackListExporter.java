@@ -1,4 +1,4 @@
-package ir.niopdc.policy.jobs;
+package ir.niopdc.policy.job;
 
 import ir.niopdc.common.entity.policy.PolicyEnum;
 import ir.niopdc.common.grpc.policy.BlackListCardInfo;
@@ -34,11 +34,9 @@ public class BlackListExporter {
   private final PolicyService policyService;
   private final AppConfig appConfig;
 
-  @Scheduled(
-      fixedDelayString = "${csv.config.fixedDelay}",
-      initialDelayString = "${csv.config.initialDelay}")
+  @Scheduled(cron = "${app.config.cron}")
   @Transactional
-  public void runCsvExportTask() {
+  public void runExportTask() {
     log.info("Initializing blackList export");
 
     String newVersion = getNextPolicyVersion();
@@ -51,7 +49,7 @@ public class BlackListExporter {
   }
 
   private BlackList exportBlackList(String filePath) throws IOException {
-    log.info("Starting blackLists export");
+    log.info("Starting blackList export");
 
     AtomicReference<BlackList> lastBlackListRecord = new AtomicReference<>();
     ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();

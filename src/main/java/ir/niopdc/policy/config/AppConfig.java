@@ -29,6 +29,8 @@ public class AppConfig {
     private String blackListPath;
     private String blackListPrefix;
     private String blackListSuffix;
-    private String codingListPath;
     private String grayListPath;
+    private String grayListPrefix;
+    private String grayListSuffix;
+    private String codingListPath;
 }
