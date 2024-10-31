@@ -5,6 +5,7 @@ import ir.niopdc.common.grpc.policy.BlackListCardInfo;
 import ir.niopdc.common.grpc.policy.BlackListResponse;
 import ir.niopdc.common.grpc.policy.OperationEnumMessage;
 import ir.niopdc.common.util.FileUtil;
+import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.policy.Policy;
@@ -32,9 +33,7 @@ public class BlackListExporter {
   private final BlackListService blackListService;
   private final PolicyVersionService policyVersionService;
   private final PolicyService policyService;
-
-  @Value("${app.black-list-path}")
-  private String blackListPath;
+  private final AppConfig appConfig;
 
   @Scheduled(
       fixedDelayString = "${csv.config.fixedDelay}",
@@ -44,10 +43,8 @@ public class BlackListExporter {
     log.info("Initializing blackLists CSV export");
 
     String newVersion = getNextPolicyVersion();
-    String fileName = createFileName(newVersion);
-
     try {
-      BlackList lastRecord = exportBlackList(blackListPath + fileName);
+      BlackList lastRecord = exportBlackList(createFileName(newVersion));
       processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (IOException e) {
       log.error("Failed to export blackLists CSV", e);
@@ -119,11 +116,13 @@ public class BlackListExporter {
         .build();
   }
 
-  private static String createFileName(String newVersion) {
-    return PolicyEnum.BLACK_LIST.name() + "_" + newVersion + ".zip";
+  private String createFileName(String versionName) {
+    return appConfig.getBlackListPath()
+            .concat(versionName)
+            .concat(appConfig.getBlackListSuffix());
   }
 
-  private static String generateVersionName(String version) {
-    return PolicyEnum.BLACK_LIST.name() + "_" + version;
+  private String generateVersionName(String version) {
+    return appConfig.getBlackListPrefix().concat(version);
   }
 }
