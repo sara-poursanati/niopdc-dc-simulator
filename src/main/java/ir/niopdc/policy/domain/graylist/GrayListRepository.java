@@ -1,6 +1,5 @@
 package ir.niopdc.policy.domain.graylist;
 
-import ir.niopdc.policy.domain.blacklist.BlackList;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 

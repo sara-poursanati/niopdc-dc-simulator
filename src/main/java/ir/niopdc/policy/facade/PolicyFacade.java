@@ -26,6 +26,7 @@ import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRuleService;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
+import ir.niopdc.policy.utils.PolicyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ public class PolicyFacade {
     private BlackListService blackListService;
     private CodingListService codingListService;
     private GrayListService grayListService;
+    private PolicyUtils policyUtils;
 
     @Transactional
     public RateResponse getFuelRatePolicy(PolicyRequest request) {
@@ -83,8 +85,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getCompleteBlackList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.BLACK_LIST);
-        Path filePath = Path.of(appConfig.getBlackListPath());
-
+        Path filePath = Path.of(policyUtils.getBlackListFileName(metadata.getVersion()));
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
@@ -125,7 +126,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getCompleteGrayList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
-        Path filePath = Path.of(appConfig.getCodingListPath());
+        Path filePath = Path.of(policyUtils.getGrayListFileName(metadata.getVersion()));
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
@@ -291,5 +292,10 @@ public class PolicyFacade {
     @Autowired
     public void setGrayListService(GrayListService grayListService) {
         this.grayListService = grayListService;
+    }
+
+    @Autowired
+    public void setPolicyUtils(PolicyUtils policyUtils) {
+        this.policyUtils = policyUtils;
     }
 }
