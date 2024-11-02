@@ -17,6 +17,9 @@ interface BlackListRepository extends ListCrudRepository<BlackList, String> {
     @Query("select b from BlackList b")
     Stream<BlackList> streamAll();
 
+    @Query("SELECT b FROM BlackList b LEFT JOIN WhiteList w ON b.cardId = w.cardId WHERE w.cardId IS NULL")
+    Stream<BlackList> streamBlackListMinusWhiteList();
+
     List<BlackList> findByInsertionDateTimeAfter(ZonedDateTime insertionDateTime);
 
     @Query("SELECT b FROM BlackList b WHERE b.insertionDateTime > :time ORDER BY b.insertionDateTime ASC")

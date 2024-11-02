@@ -23,6 +23,11 @@ public class BlackListService extends BaseService<BlackListRepository, BlackList
         return getRepository().streamAll();
     }
 
+    @Transactional(readOnly = true)
+    public Stream<BlackList> streamAllMinusWhiteList() {
+        return getRepository().streamBlackListMinusWhiteList();
+    }
+
     public List<BlackList> findByOperationDateAfter(ZonedDateTime lastOperationTime) {
         return getRepository().findByInsertionDateTimeAfter(lastOperationTime);
     }

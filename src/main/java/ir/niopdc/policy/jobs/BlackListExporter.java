@@ -39,14 +39,14 @@ public class BlackListExporter {
       initialDelayString = "${csv.config.initialDelay}")
   @Transactional
   public void runCsvExportTask() {
-    log.info("Initializing blackLists CSV export");
+    log.info("Initializing blackList export");
 
     String newVersionId = getNextPolicyVersion();
     try {
       BlackList lastRecord = exportBlackList(policyUtils.getBlackListFileName(newVersionId));
       processPolicyVersionUpdate(lastRecord, newVersionId);
     } catch (IOException e) {
-      log.error("Failed to export blackLists CSV", e);
+      log.error("Failed to export blackLists", e);
     }
   }
 
@@ -56,7 +56,7 @@ public class BlackListExporter {
     AtomicReference<BlackList> lastBlackListRecord = new AtomicReference<>();
     ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
 
-    try (Stream<BlackList> blackListStream = blackListService.streamAll()) {
+    try (Stream<BlackList> blackListStream = blackListService.streamAllMinusWhiteList()) {
       blackListStream.forEach(
           blackList -> {
             blackListCardInfos.add(createBlackListCardInfo(blackList));
@@ -66,8 +66,8 @@ public class BlackListExporter {
       BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
       FileUtil.createZipFile(filePath, response.toByteArray());
 
+      log.info("Finishing blackList export with {} records", blackListCardInfos.size());
       log.info("lastBlackListRecord = {}", lastBlackListRecord);
-      log.info("Finished blackLists export with {} records", blackListCardInfos.size());
     }
     return lastBlackListRecord.get();
   }
