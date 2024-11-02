@@ -74,11 +74,11 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     @Override
     @SneakyThrows
     public void blackList(PolicyRequest request, StreamObserver<FilePolicyResponse> responseObserver) {
-        if (request.getMode() == ModeEnumMessage.CONFIG) {
+        //if (request.getMode() == ModeEnumMessage.CONFIG) {
             sendCompleteBlackList(responseObserver);
-        } else {
-            sendDifferentialBlackList(request, responseObserver);
-        }
+       // } else {
+       //     sendDifferentialBlackList(request, responseObserver);
+       // }
     }
 
     @Override
