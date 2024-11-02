@@ -14,11 +14,21 @@ public class PolicyUtils {
 
     public String getBlackListFileName(String versionId) {
         return appConfig.getBlackListPath()
-                .concat(generateVersionName(versionId))
+                .concat(getBlackListVersionName(versionId))
                 .concat(appConfig.getBlackListSuffix());
     }
 
-    public String generateVersionName(String versionId) {
+    public String getBlackListVersionName(String versionId) {
+        return appConfig.getBlackListPrefix().concat(versionId);
+    }
+
+    public String getGrayListFileName(String versionId) {
+        return appConfig.getGrayListPath()
+                .concat(getGrayListVersionName(versionId))
+                .concat(appConfig.getGrayListSuffix());
+    }
+
+    public String getGrayListVersionName(String versionId) {
         return appConfig.getBlackListPrefix().concat(versionId);
     }
 }

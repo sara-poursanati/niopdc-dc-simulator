@@ -15,12 +15,19 @@ public class AppConfig {
     private String csvQuote;
     private String csvDelimiter;
     private String csvLineSeparator;
+
     private int chunkSize;
+
     private String nationalQuotaPath;
     private String terminalAppPath;
+
     private String blackListPath;
     private String blackListPrefix;
     private String blackListSuffix;
-    private String codingListPath;
+
     private String grayListPath;
+    private String grayListPrefix;
+    private String grayListSuffix;
+
+    private String codingListPath;
 }

@@ -126,7 +126,7 @@ public class PolicyFacade {
 
     public FilePolicyResponseDto getCompleteGrayList() {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
-        Path filePath = Path.of(appConfig.getCodingListPath());
+        Path filePath = Path.of(policyUtils.getGrayListFileName(metadata.getVersion()));
 
         return getFilePolicyResponseDto(metadata, filePath);
     }
