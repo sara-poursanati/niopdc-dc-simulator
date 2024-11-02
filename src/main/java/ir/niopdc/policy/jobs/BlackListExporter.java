@@ -5,7 +5,6 @@ import ir.niopdc.common.grpc.policy.BlackListCardInfo;
 import ir.niopdc.common.grpc.policy.BlackListResponse;
 import ir.niopdc.common.grpc.policy.OperationEnumMessage;
 import ir.niopdc.common.util.FileUtil;
-import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.policy.Policy;
