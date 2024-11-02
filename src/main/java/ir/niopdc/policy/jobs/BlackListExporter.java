@@ -89,11 +89,11 @@ public class BlackListExporter {
             .id(versionKey)
             .activationTime(lastBlackListRecord.getInsertionDateTime())
             .releaseTime(lastBlackListRecord.getInsertionDateTime())
-            .versionName(policyUtils.generateVersionName(newVersion))
+            .versionName(policyUtils.getBlackListVersionName(newVersion))
             .build();
 
     policyVersionService.save(policyVersion);
-    log.info("New policy version record inserted with versionName: {}", policyUtils.generateVersionName(newVersion));
+    log.info("New policy version record inserted with versionName: {}", policyUtils.getBlackListVersionName(newVersion));
   }
 
   private void updatePolicyCurrentVersion(String version) {
