@@ -5,7 +5,6 @@ import ir.niopdc.common.grpc.policy.BlackListCardInfo;
 import ir.niopdc.common.grpc.policy.BlackListResponse;
 import ir.niopdc.common.grpc.policy.OperationEnumMessage;
 import ir.niopdc.common.util.FileUtil;
-import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
 import ir.niopdc.policy.domain.policy.Policy;
@@ -13,6 +12,7 @@ import ir.niopdc.policy.domain.policy.PolicyService;
 import ir.niopdc.policy.domain.policyversion.PolicyVersion;
 import ir.niopdc.policy.domain.policyversion.PolicyVersionKey;
 import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
+import ir.niopdc.policy.utils.PolicyUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,17 +32,17 @@ public class BlackListExporter {
   private final BlackListService blackListService;
   private final PolicyVersionService policyVersionService;
   private final PolicyService policyService;
-  private final AppConfig appConfig;
+  private final PolicyUtils policyUtils;
 
   @Scheduled(cron = "${app.config.cron}")
   @Transactional
   public void runExportTask() {
     log.info("Initializing blackList export");
 
-    String newVersion = getNextPolicyVersion();
+    String newVersionId = getNextPolicyVersion();
     try {
-      BlackList lastRecord = exportBlackList(createFilePath(newVersion));
-      processPolicyVersionUpdate(lastRecord, newVersion);
+      BlackList lastRecord = exportBlackList(policyUtils.getBlackListFileName(newVersionId));
+      processPolicyVersionUpdate(lastRecord, newVersionId);
     } catch (IOException e) {
       log.error("Failed to export blackLists", e);
     }
@@ -87,11 +87,11 @@ public class BlackListExporter {
             .id(versionKey)
             .activationTime(lastBlackListRecord.getInsertionDateTime())
             .releaseTime(lastBlackListRecord.getInsertionDateTime())
-            .versionName(generateVersionName(newVersion))
+            .versionName(policyUtils.getBlackListVersionName(newVersion))
             .build();
 
     policyVersionService.save(policyVersion);
-    log.info("New policy version record inserted with versionName: {}", generateVersionName(newVersion));
+    log.info("New policy version record inserted with versionName: {}", policyUtils.getBlackListVersionName(newVersion));
   }
 
   private void updatePolicyCurrentVersion(String version) {
@@ -111,16 +111,5 @@ public class BlackListExporter {
         .setCardId(blackList.getCardId())
         .setOperation(OperationEnumMessage.INSERT)
         .build();
-  }
-
-  private String createFilePath(String versionName) {
-    return appConfig.getBlackListPath()
-            .concat(appConfig.getBlackListPrefix())
-            .concat(versionName)
-            .concat(appConfig.getBlackListSuffix());
-  }
-
-  private String generateVersionName(String version) {
-    return appConfig.getBlackListPrefix().concat(version);
   }
 }

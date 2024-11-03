@@ -2,9 +2,7 @@ package ir.niopdc.policy.grpc;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
-import ir.niopdc.common.entity.policy.BlackListDto;
 import ir.niopdc.common.grpc.policy.*;
-import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.facade.PolicyFacade;
@@ -13,33 +11,20 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Spliterator;
-import java.util.stream.Stream;
 
 @GrpcService
 @Slf4j
 public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
-
-    private AppConfig appConfig;
 
     private PolicyFacade policyFacade;
 
     @Autowired
     public void setPolicyFacade(PolicyFacade policyFacade) {
         this.policyFacade = policyFacade;
-    }
-
-    @Autowired
-    public void setAppConfig(AppConfig appConfig) {
-        this.appConfig = appConfig;
     }
 
     @Override
@@ -162,7 +147,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     }
 
     private void sendDifferentialList(ListResponseDto listResponseDto, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
             objectOutputStream.writeObject(listResponseDto.getObjects());
             byte[] fileBytes = outputStream.toByteArray();
             responseObserver.onNext(FilePolicyResponse
