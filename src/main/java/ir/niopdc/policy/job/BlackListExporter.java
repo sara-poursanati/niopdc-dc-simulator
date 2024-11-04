@@ -34,7 +34,7 @@ public class BlackListExporter {
   private final PolicyService policyService;
   private final PolicyUtils policyUtils;
 
-  @Scheduled(cron = "${app.config.cron}")
+  @Scheduled(cron = "${app.config.cron.blacklist}")
   @Transactional
   public void runExportTask() {
     log.info("Initializing blackList export");

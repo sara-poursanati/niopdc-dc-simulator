@@ -34,7 +34,7 @@ public class GrayListExporter {
     private final PolicyService policyService;
     private final AppConfig appConfig;
 
-    @Scheduled(cron = "${app.config.cron}")
+    @Scheduled(cron = "${app.config.cron.graylist}")
     @Transactional
     public void runExportTask() {
         log.info("Initializing grayList export");
