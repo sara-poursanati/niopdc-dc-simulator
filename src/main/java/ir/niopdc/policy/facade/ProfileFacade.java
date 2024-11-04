@@ -3,12 +3,12 @@ package ir.niopdc.policy.facade;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
 import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
-import ir.niopdc.policy.domain.fuelstation.FuelStation;
-import ir.niopdc.policy.domain.fuelstationpolicy.FuelStationPolicy;
-import ir.niopdc.policy.domain.fuelstationpolicy.FuelStationPolicyService;
-import ir.niopdc.policy.domain.fuelterminal.FuelTerminalService;
-import ir.niopdc.policy.domain.mediagateway.MediaGateway;
-import ir.niopdc.policy.domain.mediagateway.MediaGatewayService;
+import ir.niopdc.domain.fuelstation.FuelStation;
+import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicy;
+import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicyService;
+import ir.niopdc.domain.fuelterminal.FuelTerminalService;
+import ir.niopdc.domain.mediagateway.MediaGateway;
+import ir.niopdc.domain.mediagateway.MediaGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
