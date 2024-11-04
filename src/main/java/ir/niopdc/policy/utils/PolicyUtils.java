@@ -28,7 +28,5 @@ public class PolicyUtils {
                 .concat(appConfig.getGrayListSuffix());
     }
 
-    public String getGrayListVersionName(String versionId) {
-        return appConfig.getBlackListPrefix().concat(versionId);
-    }
+    public String getGrayListVersionName(String versionId) {return appConfig.getGrayListPrefix().concat(versionId);}
 }
