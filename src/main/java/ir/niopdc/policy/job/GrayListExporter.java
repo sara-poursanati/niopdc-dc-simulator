@@ -41,17 +41,11 @@ public class GrayListExporter {
   public void runExportTask() {
     log.info("Initializing grayList export");
 
-    String newVersionId = getNextPolicyVersion();
-    String fileName = policyUtils.getGrayListFileName(newVersionId);
+    String newVersion = getNextPolicyVersion();
+    String fileName = policyUtils.getGrayListFileName(newVersion);
     try {
       GrayList lastRecord = exportGrayList(fileName);
-      if (Objects.isNull(lastRecord)) {
-        log.info("BlackList table is empty; skipping export and policy version update.");
-        return;
-      }
-      processPolicyVersionUpdate(lastRecord, newVersionId);
-    } catch (IOException e) {
-      log.error("Failed to export grayList", e);
+      processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (Exception e) {
       log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
       deleteFile(fileName);
@@ -71,17 +65,19 @@ public class GrayListExporter {
             lastGrayListRecord.set(grayList);
           });
 
-      if (grayListCardInfos.isEmpty()) {
-        return null;
+      if (lastGrayListRecord.get() == null) {
+        log.info("No records found, creating an empty file for grayList export");
+        FileUtil.createZipFile(fileName, new byte[0]);
+      } else {
+        GrayListResponse response =
+            GrayListResponse.newBuilder().addAllCardInfos(grayListCardInfos).build();
+        FileUtil.createZipFile(fileName, response.toByteArray());
+
+        log.info("Finishing grayList export with {} records", grayListCardInfos.size());
+        log.info("lastGrayListRecord = {}", lastGrayListRecord);
       }
-
-      GrayListResponse response = GrayListResponse.newBuilder().addAllCardInfos(grayListCardInfos).build();
-      FileUtil.createZipFile(fileName, response.toByteArray());
-
-      log.info("Finishing grayList export with {} records", grayListCardInfos.size());
-      log.info("lastGrayListRecord = {}", lastGrayListRecord);
     }
-    return lastGrayListRecord.get();
+    return lastGrayListRecord.get() != null ? lastGrayListRecord.get() : new GrayList();
   }
 
   private void processPolicyVersionUpdate(GrayList lastGrayListRecord, String version) {
@@ -91,8 +87,8 @@ public class GrayListExporter {
     updatePolicyCurrentVersion(version);
   }
 
-  private void insertPolicyVersion(GrayList lastGrayListRecord, String newVersion) {
-    PolicyVersion policyVersion = getPolicyVersion(lastGrayListRecord, newVersion);
+  private void insertPolicyVersion(GrayList lastRecord, String newVersion) {
+    PolicyVersion policyVersion = getPolicyVersion(lastRecord, newVersion);
     policyVersionService.save(policyVersion);
     log.info(
         "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
@@ -121,7 +117,8 @@ public class GrayListExporter {
   }
 
   private String getNextPolicyVersion() {
-    String currentVersion = policyService.findById(PolicyEnum.GRAY_LIST.getValue()).getCurrentVersion();
+    String currentVersion =
+        policyService.findById(PolicyEnum.GRAY_LIST.getValue()).getCurrentVersion();
     return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 

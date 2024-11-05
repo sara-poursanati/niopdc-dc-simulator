@@ -41,17 +41,11 @@ public class BlackListExporter {
   public void runExportTask() {
     log.info("Initializing blackList export");
 
-    String newVersionId = getNextPolicyVersion();
-    String fileName = policyUtils.getBlackListFileName(newVersionId);
+    String newVersion = getNextPolicyVersion();
+    String fileName = policyUtils.getBlackListFileName(newVersion);
     try {
       BlackList lastRecord = exportBlackList(fileName);
-      if (Objects.isNull(lastRecord)) {
-        log.info("BlackList table is empty; skipping export and policy version update.");
-        return;
-      }
-      processPolicyVersionUpdate(lastRecord, newVersionId);
-    } catch (IOException e) {
-      log.error("Failed to export blackLists", e);
+      processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (Exception e) {
       log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
       deleteFile(fileName);
@@ -71,9 +65,8 @@ public class BlackListExporter {
             lastBlackListRecord.set(blackList);
           });
 
-      if (blackListCardInfos.isEmpty()) {return null;}
-
-      BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
+      BlackListResponse response =
+          BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
       FileUtil.createZipFile(filePath, response.toByteArray());
 
       log.info("Finishing blackList export with {} records", blackListCardInfos.size());
@@ -82,33 +75,32 @@ public class BlackListExporter {
     return lastBlackListRecord.get();
   }
 
-  private void processPolicyVersionUpdate(BlackList lastBlackListRecord, String version) {
+  private void processPolicyVersionUpdate(BlackList lastBlackListRecord, String newVersion) {
     Objects.requireNonNull(lastBlackListRecord, "BlackList record cannot be null");
 
-    insertPolicyVersion(lastBlackListRecord, version);
-    updatePolicyCurrentVersion(version);
+    insertPolicyVersion(lastBlackListRecord, newVersion);
+    updatePolicyCurrentVersion(newVersion);
   }
 
   private void insertPolicyVersion(BlackList lastRecord, String newVersion) {
     PolicyVersion policyVersion = getPolicyVersion(lastRecord, newVersion);
     policyVersionService.save(policyVersion);
     log.info(
-        "New policy version record inserted with versionName: {}",
-        policyUtils.getBlackListVersionName(newVersion));
+        "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
-  private PolicyVersion getPolicyVersion(BlackList lastBlackListRecord, String newVersion) {
+  private PolicyVersion getPolicyVersion(BlackList lastBlackListRecord, String version) {
     PolicyVersionKey versionKey =
         PolicyVersionKey.builder()
             .policyId(PolicyEnum.BLACK_LIST.getValue())
-            .version(newVersion)
+            .version(version)
             .build();
 
     return PolicyVersion.builder()
         .id(versionKey)
         .activationTime(lastBlackListRecord.getInsertionDateTime())
         .releaseTime(lastBlackListRecord.getInsertionDateTime())
-        .versionName(policyUtils.getBlackListVersionName(newVersion))
+        .versionName(policyUtils.getBlackListVersionName(version))
         .build();
   }
 
