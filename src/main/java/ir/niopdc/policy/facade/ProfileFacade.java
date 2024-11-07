@@ -76,9 +76,7 @@ public class ProfileFacade {
                 .setRetain(policyModel.getRetain())
                 .setQos(policyModel.getQos())
                 .setSlightDelay(policyModel.getSlightDelay())
-                .setPublishTopicTitle(policyModel.getPublishTopicTitle())
                 .setMaxBigDelayTryCount(policyModel.getMaxBigDelayTryCount())
-                .setSubscribeTopicTitle(policyModel.getSubscribeTopicTitle())
                 .setMaxSlightDelayTryCount(policyModel.getMaxSlightDelayTryCount())
                 .build());
     }
