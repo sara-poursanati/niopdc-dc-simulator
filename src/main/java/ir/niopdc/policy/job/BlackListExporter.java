@@ -1,9 +1,7 @@
 package ir.niopdc.policy.job;
 
 import ir.niopdc.common.entity.policy.PolicyEnum;
-import ir.niopdc.common.grpc.policy.BlackListCardInfo;
-import ir.niopdc.common.grpc.policy.BlackListResponse;
-import ir.niopdc.common.grpc.policy.OperationEnumMessage;
+import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.common.util.FileUtil;
 import ir.niopdc.policy.domain.blacklist.BlackList;
 import ir.niopdc.policy.domain.blacklist.BlackListService;
@@ -12,6 +10,7 @@ import ir.niopdc.policy.domain.policy.PolicyService;
 import ir.niopdc.policy.domain.policyversion.PolicyVersion;
 import ir.niopdc.policy.domain.policyversion.PolicyVersionKey;
 import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
+import ir.niopdc.policy.utils.FileUtils;
 import ir.niopdc.policy.utils.PolicyUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -47,49 +43,55 @@ public class BlackListExporter {
       BlackList lastRecord = exportBlackList(fileName);
       processPolicyVersionUpdate(lastRecord, newVersion);
     } catch (Exception e) {
-      log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
-      deleteFile(fileName);
+      handleFileCreationError(fileName, e);
     }
   }
 
-  private BlackList exportBlackList(String filePath) throws IOException {
+  private BlackList exportBlackList(String fileName) throws IOException {
     log.info("Starting blackList export");
 
-    AtomicReference<BlackList> lastBlackListRecord = new AtomicReference<>();
+    AtomicReference<BlackList> lastBlackList = new AtomicReference<>();
     ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
 
     try (Stream<BlackList> blackListStream = blackListService.streamAllMinusWhiteList()) {
       blackListStream.forEach(
           blackList -> {
             blackListCardInfos.add(createBlackListCardInfo(blackList));
-            lastBlackListRecord.set(blackList);
+            lastBlackList.set(blackList);
           });
 
-      BlackListResponse response =
-          BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
-      FileUtil.createZipFile(filePath, response.toByteArray());
-
-      log.info("Finishing blackList export with {} records", blackListCardInfos.size());
-      log.info("lastBlackListRecord = {}", lastBlackListRecord);
+      createFileFromBlackList(fileName, lastBlackList, blackListCardInfos);
+    } catch (Exception e) {
+      log.error("Error during blackList export stream", e);
+      throw e;
     }
-    return lastBlackListRecord.get();
+    return lastBlackList.get() != null ? lastBlackList.get() : new BlackList();
   }
 
-  private void processPolicyVersionUpdate(BlackList lastBlackListRecord, String newVersion) {
-    Objects.requireNonNull(lastBlackListRecord, "BlackList record cannot be null");
+  private void createFileFromBlackList(String fileName, AtomicReference<BlackList> lastBlackList,
+                                      ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos) throws IOException {
+    if (lastBlackList.get() == null) {
+      log.info("No records found, creating an empty file for blackList export");
+      FileUtil.createZipFile(fileName, new byte[0]);
+    } else {
+      BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
+      FileUtil.createZipFile(fileName, response.toByteArray());
+      log.info("Finished blackList export with {} records; last record: {}", blackListCardInfos.size(), lastBlackList.get());
+    }
+  }
 
-    insertPolicyVersion(lastBlackListRecord, newVersion);
-    updatePolicyCurrentVersion(newVersion);
+  private void processPolicyVersionUpdate(BlackList lastBlackList, String version) {
+    insertPolicyVersion(lastBlackList, version);
+    updatePolicyCurrentVersion(version);
   }
 
   private void insertPolicyVersion(BlackList lastRecord, String newVersion) {
-    PolicyVersion policyVersion = getPolicyVersion(lastRecord, newVersion);
+    PolicyVersion policyVersion = buildPolicyVersion(lastRecord, newVersion);
     policyVersionService.save(policyVersion);
-    log.info(
-        "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
+    log.info("New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
-  private PolicyVersion getPolicyVersion(BlackList lastBlackListRecord, String version) {
+  private PolicyVersion buildPolicyVersion(BlackList lastBlackListRecord, String version) {
     PolicyVersionKey versionKey =
         PolicyVersionKey.builder()
             .policyId(PolicyEnum.BLACK_LIST.getValue())
@@ -117,26 +119,15 @@ public class BlackListExporter {
     return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 
+  private void handleFileCreationError(String fileName, Exception e) {
+    log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
+    FileUtils.deleteFile(fileName);
+  }
+
   private static BlackListCardInfo createBlackListCardInfo(BlackList blackList) {
     return BlackListCardInfo.newBuilder()
         .setCardId(blackList.getCardId())
         .setOperation(OperationEnumMessage.INSERT)
         .build();
-  }
-
-  private static void deleteFile(String filePath) {
-    Path path = Path.of(filePath);
-
-    if (Files.notExists(path)) {
-      log.warn("File deletion skipped; file not found at path: {}", filePath);
-      return;
-    }
-
-    try {
-      Files.delete(path);
-      log.info("Successfully deleted file at path: {}", filePath);
-    } catch (IOException e) {
-      log.error("Failed to delete file at path: {}. Reason: {}", filePath, e.getMessage(), e);
-    }
   }
 }
