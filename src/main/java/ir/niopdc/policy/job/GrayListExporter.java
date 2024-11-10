@@ -21,8 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 @Service
@@ -34,76 +36,81 @@ public class GrayListExporter {
   private final PolicyService policyService;
   private final PolicyUtils policyUtils;
 
-  @Scheduled(cron = "${app.config.cron.gray-list}")
-  @Transactional
-  public void runExportTask() {
-    log.info("Initializing grayList export");
+    @Scheduled(cron = "${app.config.cron.gray-list}")
+    @Transactional
+    public void runExportTask() {
+      log.info("Initializing grayList export");
 
-    String newVersion = getNextPolicyVersion();
-    String fileName = policyUtils.getGrayListFileName(newVersion);
-    try {
-      GrayList lastRecord = exportGrayList(fileName);
-      processPolicyVersionUpdate(lastRecord, newVersion);
-    } catch (Exception e) {
-      handleFileCreationError(fileName, e);
+      String newVersion = getNextPolicyVersion();
+      String fileName = policyUtils.getGrayListFileName(newVersion);
+      try {
+        ZonedDateTime lastDateQuery = exportGrayList(fileName);
+        processPolicyVersionUpdate(lastDateQuery, newVersion);
+      } catch (Exception e) {
+        handleFileCreationError(fileName, e);
+      }
     }
-  }
 
-  private GrayList exportGrayList(String fileName) throws IOException {
+  private ZonedDateTime exportGrayList(String fileName) throws IOException {
     log.info("Starting grayList export for file: {}", fileName);
 
-    AtomicReference<GrayList> lastGrayList = new AtomicReference<>();
     ConcurrentLinkedQueue<GrayListCardInfo> grayListCardInfos = new ConcurrentLinkedQueue<>();
+    ZonedDateTime nowDate = Instant.now().atZone(ZoneId.systemDefault());
 
-    try (Stream<GrayList> grayListStream = grayListService.streamAll()) {
-      grayListStream.forEach(grayList -> {
-        grayListCardInfos.add(createGrayListCardInfo(grayList));
-        lastGrayList.set(grayList);
-      });
+    try (Stream<GrayList> grayListStream = grayListService.streamAllBeforeDate(nowDate)) {
+      grayListStream.forEach(grayList -> grayListCardInfos.add(createGrayListCardInfo(grayList)));
 
-      createFileFromGrayList(fileName, lastGrayList, grayListCardInfos);
+      createFileFromGrayList(fileName, grayListCardInfos);
+      log.info(
+          "Finished grayList export with {} records; last date of query: {}",
+          grayListCardInfos.size(),
+          nowDate);
+
     } catch (Exception e) {
       log.error("Error during grayList export stream", e);
       throw e;
     }
-    return lastGrayList.get() != null ? lastGrayList.get() : new GrayList();
+    return nowDate;
   }
 
-  private void createFileFromGrayList(String fileName, AtomicReference<GrayList> lastGrayListRecord,
-                                      ConcurrentLinkedQueue<GrayListCardInfo> grayListCardInfos) throws IOException {
-    if (lastGrayListRecord.get() == null) {
+  private void createFileFromGrayList(
+      String fileName, ConcurrentLinkedQueue<GrayListCardInfo> grayListCardInfos)
+      throws IOException {
+    if (grayListCardInfos.isEmpty()) {
       log.info("No records found, creating an empty file for grayList export");
       FileUtil.createZipFile(fileName, new byte[0]);
     } else {
-      GrayListResponse response = GrayListResponse.newBuilder().addAllCardInfos(grayListCardInfos).build();
+      GrayListResponse response =
+          GrayListResponse.newBuilder().addAllCardInfos(grayListCardInfos).build();
       FileUtil.createZipFile(fileName, response.toByteArray());
-      log.info("Finished grayList export with {} records; last record: {}", grayListCardInfos.size(), lastGrayListRecord.get());
     }
   }
 
-  private void processPolicyVersionUpdate(GrayList lastGrayList, String version) {
-    insertPolicyVersion(lastGrayList, version);
+  private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version) {
+    insertPolicyVersion(lastDate, version);
     updatePolicyCurrentVersion(version);
   }
 
-  private void insertPolicyVersion(GrayList lastRecord, String version) {
-    PolicyVersion policyVersion = buildPolicyVersion(lastRecord, version);
+  private void insertPolicyVersion(ZonedDateTime lastDate, String version) {
+    PolicyVersion policyVersion = buildPolicyVersion(lastDate, version);
     policyVersionService.save(policyVersion);
-    log.info("New policy version record inserted with versionName: {}", policyVersion.getVersionName());
+    log.info(
+        "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
-  private PolicyVersion buildPolicyVersion(GrayList lastGrayListRecord, String version) {
-    PolicyVersionKey versionKey = PolicyVersionKey.builder()
+  private PolicyVersion buildPolicyVersion(ZonedDateTime lastDate, String version) {
+    PolicyVersionKey versionKey =
+        PolicyVersionKey.builder()
             .policyId(PolicyEnum.GRAY_LIST.getValue())
             .version(version)
             .build();
 
     return PolicyVersion.builder()
-            .id(versionKey)
-            .activationTime(lastGrayListRecord.getInsertionDateTime())
-            .releaseTime(lastGrayListRecord.getInsertionDateTime())
-            .versionName(policyUtils.getGrayListVersionName(version))
-            .build();
+        .id(versionKey)
+        .activationTime(lastDate)
+        .releaseTime(lastDate)
+        .versionName(policyUtils.getGrayListVersionName(version))
+        .build();
   }
 
   private void updatePolicyCurrentVersion(String version) {
@@ -119,7 +126,7 @@ public class GrayListExporter {
     return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 
-  private void handleFileCreationError(String fileName, Exception e) {
+  private static void handleFileCreationError(String fileName, Exception e) {
     log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
     FileUtils.deleteFile(fileName);
   }

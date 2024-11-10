@@ -1,7 +1,5 @@
 package ir.niopdc.policy.domain.blacklist;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -17,11 +15,16 @@ interface BlackListRepository extends ListCrudRepository<BlackList, String> {
     @Query("select b from BlackList b")
     Stream<BlackList> streamAll();
 
-    @Query("SELECT b FROM BlackList b LEFT JOIN WhiteList w ON b.cardId = w.cardId WHERE w.cardId IS NULL")
+    @Query("select b from BlackList b left join WhiteList w on b.cardId = w.cardId where w.cardId is null")
     Stream<BlackList> streamBlackListMinusWhiteList();
 
-    List<BlackList> findByInsertionDateTimeAfter(ZonedDateTime insertionDateTime);
+    @Query("select b from BlackList b where b.insertionDateTime <= :specifiedDate order by b.insertionDateTime asc")
+    Stream<BlackList> streamAllBeforeDate(@Param("specifiedDate") ZonedDateTime specifiedDate);
 
-    @Query("SELECT b FROM BlackList b WHERE b.insertionDateTime > :time ORDER BY b.insertionDateTime ASC")
-    Page<BlackList> findAllByInsertionDateTimeAfter(@Param("time") ZonedDateTime time, Pageable pageable);
+    @Query("SELECT b FROM BlackList b LEFT JOIN WhiteList w ON b.cardId = w.cardId " +
+            "WHERE w.cardId IS NULL AND b.insertionDateTime <= :specifiedDate " +
+            "ORDER BY b.insertionDateTime ASC")
+    Stream<BlackList> streamBlackListMinusWhiteListBeforeDate(@Param("specifiedDate") ZonedDateTime specifiedDate);
+
+    List<BlackList> findByInsertionDateTimeAfter(ZonedDateTime insertionDateTime);
 }

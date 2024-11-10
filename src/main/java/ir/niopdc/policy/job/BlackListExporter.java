@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 @Service
@@ -40,58 +42,60 @@ public class BlackListExporter {
     String newVersion = getNextPolicyVersion();
     String fileName = policyUtils.getBlackListFileName(newVersion);
     try {
-      BlackList lastRecord = exportBlackList(fileName);
-      processPolicyVersionUpdate(lastRecord, newVersion);
+      ZonedDateTime lastQueryDate = exportBlackList(fileName);
+      processPolicyVersionUpdate(lastQueryDate, newVersion);
     } catch (Exception e) {
       handleFileCreationError(fileName, e);
     }
   }
 
-  private BlackList exportBlackList(String fileName) throws IOException {
-    log.info("Starting blackList export");
+  private ZonedDateTime exportBlackList(String fileName) throws IOException {
+    log.info("Starting blackList export for file: {}", fileName);
 
-    AtomicReference<BlackList> lastBlackList = new AtomicReference<>();
     ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
+    ZonedDateTime nowDate = Instant.now().atZone(ZoneId.systemDefault());
 
-    try (Stream<BlackList> blackListStream = blackListService.streamAllMinusWhiteList()) {
-      blackListStream.forEach(
-          blackList -> {
-            blackListCardInfos.add(createBlackListCardInfo(blackList));
-            lastBlackList.set(blackList);
-          });
+    try (Stream<BlackList> blackListStream = blackListService.streamBlackListMinusWhiteListBeforeDate(nowDate)) {
+      blackListStream.forEach(blackList -> blackListCardInfos.add(createBlackListCardInfo(blackList)));
 
-      createFileFromBlackList(fileName, lastBlackList, blackListCardInfos);
+      createFileFromBlackList(fileName, blackListCardInfos);
+      log.info(
+              "Finished blackList export with {} records; last date of query: {}",
+              blackListCardInfos.size(),
+              nowDate);
     } catch (Exception e) {
       log.error("Error during blackList export stream", e);
       throw e;
     }
-    return lastBlackList.get() != null ? lastBlackList.get() : new BlackList();
+    return nowDate;
   }
 
-  private void createFileFromBlackList(String fileName, AtomicReference<BlackList> lastBlackList,
-                                      ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos) throws IOException {
-    if (lastBlackList.get() == null) {
+  private void createFileFromBlackList(
+      String fileName, ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos)
+      throws IOException {
+    if (blackListCardInfos.isEmpty()) {
       log.info("No records found, creating an empty file for blackList export");
       FileUtil.createZipFile(fileName, new byte[0]);
     } else {
-      BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
+      BlackListResponse response =
+          BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
       FileUtil.createZipFile(fileName, response.toByteArray());
-      log.info("Finished blackList export with {} records; last record: {}", blackListCardInfos.size(), lastBlackList.get());
     }
   }
 
-  private void processPolicyVersionUpdate(BlackList lastBlackList, String version) {
-    insertPolicyVersion(lastBlackList, version);
+  private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version) {
+    insertPolicyVersion(lastDate, version);
     updatePolicyCurrentVersion(version);
   }
 
-  private void insertPolicyVersion(BlackList lastRecord, String newVersion) {
-    PolicyVersion policyVersion = buildPolicyVersion(lastRecord, newVersion);
+  private void insertPolicyVersion(ZonedDateTime lastDate, String newVersion) {
+    PolicyVersion policyVersion = buildPolicyVersion(lastDate, newVersion);
     policyVersionService.save(policyVersion);
-    log.info("New policy version record inserted with versionName: {}", policyVersion.getVersionName());
+    log.info(
+        "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
-  private PolicyVersion buildPolicyVersion(BlackList lastBlackListRecord, String version) {
+  private PolicyVersion buildPolicyVersion(ZonedDateTime lastDate, String version) {
     PolicyVersionKey versionKey =
         PolicyVersionKey.builder()
             .policyId(PolicyEnum.BLACK_LIST.getValue())
@@ -100,8 +104,8 @@ public class BlackListExporter {
 
     return PolicyVersion.builder()
         .id(versionKey)
-        .activationTime(lastBlackListRecord.getInsertionDateTime())
-        .releaseTime(lastBlackListRecord.getInsertionDateTime())
+        .activationTime(lastDate)
+        .releaseTime(lastDate)
         .versionName(policyUtils.getBlackListVersionName(version))
         .build();
   }
@@ -119,7 +123,7 @@ public class BlackListExporter {
     return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 
-  private void handleFileCreationError(String fileName, Exception e) {
+  private static void handleFileCreationError(String fileName, Exception e) {
     log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
     FileUtils.deleteFile(fileName);
   }

@@ -11,12 +11,17 @@ import java.util.stream.Stream;
 @Service
 public class GrayListService extends BaseService<GrayListRepository, GrayList, String> {
 
-    @Transactional(readOnly = true)
-    public Stream<GrayList> streamAll() {
-        return getRepository().streamAll();
-    }
+  @Transactional(readOnly = true)
+  public Stream<GrayList> streamAll() {
+    return getRepository().streamAll();
+  }
 
-    public List<GrayList> findByOperationDateAfter(ZonedDateTime lastOperationTime) {
-        return getRepository().findByInsertionDateTimeAfter(lastOperationTime);
-    }
+  @Transactional(readOnly = true)
+  public Stream<GrayList> streamAllBeforeDate(ZonedDateTime date) {
+    return getRepository().streamAllBeforeDate(date);
+  }
+
+  public List<GrayList> findByOperationDateAfter(ZonedDateTime lastOperationTime) {
+    return getRepository().findByInsertionDateTimeAfter(lastOperationTime);
+  }
 }

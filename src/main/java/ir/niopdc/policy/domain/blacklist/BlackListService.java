@@ -1,6 +1,7 @@
 package ir.niopdc.policy.domain.blacklist;
 
 import ir.niopdc.base.BaseService;
+import ir.niopdc.policy.domain.graylist.GrayList;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,11 +15,6 @@ import java.util.stream.Stream;
 public class BlackListService extends BaseService<BlackListRepository, BlackList, String> {
 
     @Transactional(readOnly = true)
-    public Page<BlackList> fetchPageAfter(ZonedDateTime time, Pageable page) {
-        return getRepository().findAllByInsertionDateTimeAfter(time, page);
-    }
-
-    @Transactional(readOnly = true)
     public Stream<BlackList> streamAll() {
         return getRepository().streamAll();
     }
@@ -28,7 +24,18 @@ public class BlackListService extends BaseService<BlackListRepository, BlackList
         return getRepository().streamBlackListMinusWhiteList();
     }
 
+    @Transactional(readOnly = true)
+    public Stream<BlackList> streamAllBeforeDate(ZonedDateTime date) {
+        return getRepository().streamAllBeforeDate(date);
+    }
+
+    @Transactional(readOnly = true)
+    public Stream<BlackList> streamBlackListMinusWhiteListBeforeDate(ZonedDateTime date) {
+        return getRepository().streamBlackListMinusWhiteListBeforeDate(date);
+    }
+
     public List<BlackList> findByOperationDateAfter(ZonedDateTime lastOperationTime) {
+
         return getRepository().findByInsertionDateTimeAfter(lastOperationTime);
     }
 }
