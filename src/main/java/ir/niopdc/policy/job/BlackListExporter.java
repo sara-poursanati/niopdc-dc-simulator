@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Stream;
 
@@ -52,13 +54,14 @@ public class BlackListExporter {
   private ZonedDateTime exportBlackList(String fileName) throws IOException {
     log.info("Starting blackList export for file: {}", fileName);
 
-    ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
+    List<BlackListCardInfo> blackListCardInfos = new ArrayList<>();
     ZonedDateTime nowDate = Instant.now().atZone(ZoneId.systemDefault());
 
     try (Stream<BlackList> blackListStream = blackListService.streamBlackListMinusWhiteListBeforeDate(nowDate)) {
-      blackListStream.forEach(blackList -> blackListCardInfos.add(createBlackListCardInfo(blackList)));
 
+      blackListStream.map(this::createBlackListCardInfo).forEach(blackListCardInfos::add);
       createFileFromBlackList(fileName, blackListCardInfos);
+
       log.info(
               "Finished blackList export with {} records; last date of query: {}",
               blackListCardInfos.size(),
@@ -71,7 +74,7 @@ public class BlackListExporter {
   }
 
   private void createFileFromBlackList(
-      String fileName, ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos)
+      String fileName, List<BlackListCardInfo> blackListCardInfos)
       throws IOException {
     if (blackListCardInfos.isEmpty()) {
       log.info("No records found, creating an empty file for blackList export");
@@ -123,15 +126,15 @@ public class BlackListExporter {
     return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 
+  private  BlackListCardInfo createBlackListCardInfo(BlackList blackList) {
+    return BlackListCardInfo.newBuilder()
+            .setCardId(blackList.getCardId())
+            .setOperation(OperationEnumMessage.INSERT)
+            .build();
+  }
+
   private static void handleFileCreationError(String fileName, Exception e) {
     log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
     FileUtils.deleteFile(fileName);
-  }
-
-  private static BlackListCardInfo createBlackListCardInfo(BlackList blackList) {
-    return BlackListCardInfo.newBuilder()
-        .setCardId(blackList.getCardId())
-        .setOperation(OperationEnumMessage.INSERT)
-        .build();
   }
 }

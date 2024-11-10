@@ -24,7 +24,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Service
@@ -54,13 +55,14 @@ public class GrayListExporter {
   private ZonedDateTime exportGrayList(String fileName) throws IOException {
     log.info("Starting grayList export for file: {}", fileName);
 
-    ConcurrentLinkedQueue<GrayListCardInfo> grayListCardInfos = new ConcurrentLinkedQueue<>();
+    List<GrayListCardInfo> grayListCardInfos = new ArrayList<>();
     ZonedDateTime nowDate = Instant.now().atZone(ZoneId.systemDefault());
 
     try (Stream<GrayList> grayListStream = grayListService.streamAllBeforeDate(nowDate)) {
-      grayListStream.forEach(grayList -> grayListCardInfos.add(createGrayListCardInfo(grayList)));
 
+      grayListStream.map(this::createGrayListCardInfo).forEach(grayListCardInfos::add);
       createFileFromGrayList(fileName, grayListCardInfos);
+
       log.info(
           "Finished grayList export with {} records; last date of query: {}",
           grayListCardInfos.size(),
@@ -74,7 +76,7 @@ public class GrayListExporter {
   }
 
   private void createFileFromGrayList(
-      String fileName, ConcurrentLinkedQueue<GrayListCardInfo> grayListCardInfos)
+      String fileName, List<GrayListCardInfo> grayListCardInfos)
       throws IOException {
     if (grayListCardInfos.isEmpty()) {
       log.info("No records found, creating an empty file for grayList export");
@@ -126,17 +128,17 @@ public class GrayListExporter {
     return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 
+  private GrayListCardInfo createGrayListCardInfo(GrayList grayList) {
+    return GrayListCardInfo.newBuilder()
+            .setCardId(grayList.getCardId())
+            .setOperation(OperationEnumMessage.INSERT)
+            .setType(grayList.getType())
+            .setReason(grayList.getReason())
+            .build();
+  }
+
   private static void handleFileCreationError(String fileName, Exception e) {
     log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
     FileUtils.deleteFile(fileName);
-  }
-
-  private static GrayListCardInfo createGrayListCardInfo(GrayList grayList) {
-    return GrayListCardInfo.newBuilder()
-        .setCardId(grayList.getCardId())
-        .setOperation(OperationEnumMessage.INSERT)
-        .setType(grayList.getType())
-        .setReason(grayList.getReason())
-        .build();
   }
 }
