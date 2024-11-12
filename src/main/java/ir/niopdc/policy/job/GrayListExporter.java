@@ -14,6 +14,7 @@ import ir.niopdc.policy.domain.policyversion.PolicyVersionKey;
 import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.utils.FileUtils;
 import ir.niopdc.policy.utils.PolicyUtils;
+import ir.niopdc.policy.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,20 +38,21 @@ public class GrayListExporter {
   private final PolicyService policyService;
   private final PolicyUtils policyUtils;
 
-    @Scheduled(cron = "${app.config.cron.gray-list}")
-    @Transactional
-    public void runExportTask() {
-      log.info("Initializing grayList export");
+  @Scheduled(cron = "${app.config.cron.gray-list}")
+  @Transactional
+  public void runExportTask() {
+    log.info("Initializing grayList export");
 
-      String newVersion = getNextPolicyVersion();
-      String fileName = policyUtils.getGrayListFileName(newVersion);
-      try {
-        ZonedDateTime lastDateQuery = exportGrayList(fileName);
-        processPolicyVersionUpdate(lastDateQuery, newVersion);
-      } catch (Exception e) {
-        handleFileCreationError(fileName, e);
-      }
+    String newVersion = getNextPolicyVersion();
+    String fileName = policyUtils.getGrayListFileName(newVersion);
+    try {
+      ZonedDateTime lastDateQuery = exportGrayList(fileName);
+      String checksum = SecurityUtils.createHash(fileName);
+      processPolicyVersionUpdate(lastDateQuery, newVersion, checksum);
+    } catch (Exception e) {
+      handleFileCreationError(fileName, e);
     }
+  }
 
   private ZonedDateTime exportGrayList(String fileName) throws IOException {
     log.info("Starting grayList export for file: {}", fileName);
@@ -75,8 +77,7 @@ public class GrayListExporter {
     return nowDate;
   }
 
-  private void createFileFromGrayList(
-      String fileName, List<GrayListCardInfo> grayListCardInfos)
+  private void createFileFromGrayList(String fileName, List<GrayListCardInfo> grayListCardInfos)
       throws IOException {
     if (grayListCardInfos.isEmpty()) {
       log.info("No records found, creating an empty file for grayList export");
@@ -88,19 +89,20 @@ public class GrayListExporter {
     }
   }
 
-  private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version) {
-    insertPolicyVersion(lastDate, version);
+  private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version, String checksum) {
+    insertPolicyVersion(lastDate, version, checksum);
     updatePolicyCurrentVersion(version);
   }
 
-  private void insertPolicyVersion(ZonedDateTime lastDate, String version) {
-    PolicyVersion policyVersion = buildPolicyVersion(lastDate, version);
+  private void insertPolicyVersion(ZonedDateTime lastDate, String version, String checksum) {
+    PolicyVersion policyVersion = buildPolicyVersion(lastDate, version, checksum);
     policyVersionService.save(policyVersion);
     log.info(
         "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
-  private PolicyVersion buildPolicyVersion(ZonedDateTime lastDate, String version) {
+  private PolicyVersion buildPolicyVersion(
+      ZonedDateTime lastDate, String version, String checksum) {
     PolicyVersionKey versionKey =
         PolicyVersionKey.builder()
             .policyId(PolicyEnum.GRAY_LIST.getValue())
@@ -109,9 +111,10 @@ public class GrayListExporter {
 
     return PolicyVersion.builder()
         .id(versionKey)
+        .checksum(checksum)
+        .versionName(policyUtils.getGrayListVersionName(version))
         .activationTime(lastDate)
         .releaseTime(lastDate)
-        .versionName(policyUtils.getGrayListVersionName(version))
         .build();
   }
 
@@ -130,11 +133,11 @@ public class GrayListExporter {
 
   private GrayListCardInfo createGrayListCardInfo(GrayList grayList) {
     return GrayListCardInfo.newBuilder()
-            .setCardId(grayList.getCardId())
-            .setOperation(OperationEnumMessage.INSERT)
-            .setType(grayList.getType())
-            .setReason(grayList.getReason())
-            .build();
+        .setCardId(grayList.getCardId())
+        .setOperation(OperationEnumMessage.INSERT)
+        .setType(grayList.getType())
+        .setReason(grayList.getReason())
+        .build();
   }
 
   private static void handleFileCreationError(String fileName, Exception e) {

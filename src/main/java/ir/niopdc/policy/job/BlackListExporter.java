@@ -12,6 +12,7 @@ import ir.niopdc.policy.domain.policyversion.PolicyVersionKey;
 import ir.niopdc.policy.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.utils.FileUtils;
 import ir.niopdc.policy.utils.PolicyUtils;
+import ir.niopdc.policy.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -44,7 +45,8 @@ public class BlackListExporter {
     String fileName = policyUtils.getBlackListFileName(newVersion);
     try {
       ZonedDateTime lastQueryDate = exportBlackList(fileName);
-      processPolicyVersionUpdate(lastQueryDate, newVersion);
+      String checksum = SecurityUtils.createHash(fileName);
+      processPolicyVersionUpdate(lastQueryDate, newVersion, checksum);
     } catch (Exception e) {
       handleFileCreationError(fileName, e);
     }
@@ -56,15 +58,16 @@ public class BlackListExporter {
     List<BlackListCardInfo> blackListCardInfos = new ArrayList<>();
     ZonedDateTime nowDate = Instant.now().atZone(ZoneId.systemDefault());
 
-    try (Stream<BlackList> blackListStream = blackListService.streamBlackListMinusWhiteListBeforeDate(nowDate)) {
+    try (Stream<BlackList> blackListStream =
+        blackListService.streamBlackListMinusWhiteListBeforeDate(nowDate)) {
 
       blackListStream.map(this::createBlackListCardInfo).forEach(blackListCardInfos::add);
       createFileFromBlackList(fileName, blackListCardInfos);
 
       log.info(
-              "Finished blackList export with {} records; last date of query: {}",
-              blackListCardInfos.size(),
-              nowDate);
+          "Finished blackList export with {} records; last date of query: {}",
+          blackListCardInfos.size(),
+          nowDate);
     } catch (Exception e) {
       log.error("Error during blackList export stream", e);
       throw e;
@@ -72,8 +75,7 @@ public class BlackListExporter {
     return nowDate;
   }
 
-  private void createFileFromBlackList(
-      String fileName, List<BlackListCardInfo> blackListCardInfos)
+  private void createFileFromBlackList(String fileName, List<BlackListCardInfo> blackListCardInfos)
       throws IOException {
     if (blackListCardInfos.isEmpty()) {
       log.info("No records found, creating an empty file for blackList export");
@@ -85,19 +87,20 @@ public class BlackListExporter {
     }
   }
 
-  private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version) {
-    insertPolicyVersion(lastDate, version);
+  private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version, String checksum) {
+    insertPolicyVersion(lastDate, version, checksum);
     updatePolicyCurrentVersion(version);
   }
 
-  private void insertPolicyVersion(ZonedDateTime lastDate, String newVersion) {
-    PolicyVersion policyVersion = buildPolicyVersion(lastDate, newVersion);
+  private void insertPolicyVersion(ZonedDateTime lastDate, String newVersion, String checksum) {
+    PolicyVersion policyVersion = buildPolicyVersion(lastDate, newVersion, checksum);
     policyVersionService.save(policyVersion);
     log.info(
         "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
-  private PolicyVersion buildPolicyVersion(ZonedDateTime lastDate, String version) {
+  private PolicyVersion buildPolicyVersion(
+      ZonedDateTime lastDate, String version, String checksum) {
     PolicyVersionKey versionKey =
         PolicyVersionKey.builder()
             .policyId(PolicyEnum.BLACK_LIST.getValue())
@@ -106,9 +109,10 @@ public class BlackListExporter {
 
     return PolicyVersion.builder()
         .id(versionKey)
+        .versionName(policyUtils.getBlackListVersionName(version))
+        .checksum(checksum)
         .activationTime(lastDate)
         .releaseTime(lastDate)
-        .versionName(policyUtils.getBlackListVersionName(version))
         .build();
   }
 
@@ -125,11 +129,11 @@ public class BlackListExporter {
     return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 
-  private  BlackListCardInfo createBlackListCardInfo(BlackList blackList) {
+  private BlackListCardInfo createBlackListCardInfo(BlackList blackList) {
     return BlackListCardInfo.newBuilder()
-            .setCardId(blackList.getCardId())
-            .setOperation(OperationEnumMessage.INSERT)
-            .build();
+        .setCardId(blackList.getCardId())
+        .setOperation(OperationEnumMessage.INSERT)
+        .build();
   }
 
   private static void handleFileCreationError(String fileName, Exception e) {

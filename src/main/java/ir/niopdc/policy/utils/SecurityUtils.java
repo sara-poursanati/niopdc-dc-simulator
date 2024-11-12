@@ -1,11 +1,18 @@
 package ir.niopdc.policy.utils;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.codec.digest.DigestUtils;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+
 
 @UtilityClass
 public class SecurityUtils {
 
-    public static void createHash(String filePath){
-        // TODO create sha512
+  public String createHash(String filePath) throws IOException {
+    try (FileInputStream fis = new FileInputStream(filePath)) {
+      return DigestUtils.sha512Hex(fis);
     }
+  }
 }
