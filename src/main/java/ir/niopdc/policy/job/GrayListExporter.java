@@ -5,7 +5,6 @@ import ir.niopdc.common.grpc.policy.GrayListCardInfo;
 import ir.niopdc.common.grpc.policy.GrayListResponse;
 import ir.niopdc.common.grpc.policy.OperationEnumMessage;
 import ir.niopdc.common.util.FileUtil;
-import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.domain.graylist.GrayList;
 import ir.niopdc.domain.graylist.GrayListService;
 import ir.niopdc.domain.policy.Policy;
