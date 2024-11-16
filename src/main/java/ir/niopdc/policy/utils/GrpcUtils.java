@@ -2,9 +2,9 @@ package ir.niopdc.policy.utils;
 
 import com.google.protobuf.Timestamp;
 import ir.niopdc.common.grpc.policy.*;
-import ir.niopdc.policy.domain.fuel.Fuel;
-import ir.niopdc.policy.domain.fuelrate.FuelRate;
-import ir.niopdc.policy.domain.regionalquotarule.RegionalQuotaRule;
+import ir.niopdc.domain.fuel.Fuel;
+import ir.niopdc.domain.fuelrate.FuelRate;
+import ir.niopdc.domain.regionalquotarule.RegionalQuotaRule;
 
 import java.time.Instant;
 import java.time.ZoneId;
