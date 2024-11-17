@@ -5,6 +5,7 @@ import ir.niopdc.common.grpc.policy.PolicyMetadata;
 import ir.niopdc.common.grpc.policy.PolicyRequest;
 import ir.niopdc.common.grpc.policy.RateResponse;
 import ir.niopdc.common.grpc.policy.RegionalQuotaResponse;
+import ir.niopdc.constant.ErrorMessages;
 import ir.niopdc.policy.config.AppConfig;
 import ir.niopdc.domain.blacklist.BlackList;
 import ir.niopdc.domain.blacklist.BlackListService;
@@ -27,16 +28,20 @@ import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.utils.GrpcUtils;
 import ir.niopdc.policy.utils.PolicyUtils;
+import ir.niopdc.policy.utils.SecurityUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class PolicyFacade {
     private AppConfig appConfig;
@@ -83,9 +88,10 @@ public class PolicyFacade {
 
     }
 
-    public FilePolicyResponseDto getCompleteBlackList() {
+    public FilePolicyResponseDto getCompleteBlackList() throws IOException {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.BLACK_LIST);
         Path filePath = Path.of(policyUtils.getBlackListFileName(metadata.getVersion()));
+        handleFileIntegrity(PolicyEnum.BLACK_LIST, filePath);
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
@@ -124,10 +130,10 @@ public class PolicyFacade {
         return getCodingListResponseDto(metadata, codingLists);
     }
 
-    public FilePolicyResponseDto getCompleteGrayList() {
+    public FilePolicyResponseDto getCompleteGrayList() throws IOException {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
         Path filePath = Path.of(policyUtils.getGrayListFileName(metadata.getVersion()));
-
+        handleFileIntegrity(PolicyEnum.GRAY_LIST, filePath);
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
@@ -157,7 +163,7 @@ public class PolicyFacade {
 
     private PolicyMetadata loadMetadataByVersion(PolicyEnum policyEnum) {
         Policy policy = policyService.findById(policyEnum.getValue());
-        Objects.requireNonNull(policy, String.format("Policy not found for %s", policyEnum));
+        Objects.requireNonNull(policy, String.format(ErrorMessages.POLICY_NOT_FOUND, policyEnum));
         PolicyVersionKey key = new PolicyVersionKey();
         key.setPolicyId(policy.getId());
         key.setVersion(policy.getCurrentVersion());
@@ -167,8 +173,25 @@ public class PolicyFacade {
 
     private PolicyMetadata loadMetadataByOperationDate(PolicyEnum policyEnum, ZonedDateTime lastOperationDateTime) {
         Policy policy = policyService.findById(policyEnum.getValue());
-        Objects.requireNonNull(policy, String.format("Policy not found for %s", policyEnum));
+        Objects.requireNonNull(policy, String.format(ErrorMessages.POLICY_NOT_FOUND, policyEnum));
         return loadMetadata(policy, lastOperationDateTime);
+    }
+
+    private String getHashOfCurrentVersionFile(PolicyEnum policyEnum) {
+        Policy policy = policyService.findById(policyEnum.getValue());
+        Objects.requireNonNull(policy, String.format(ErrorMessages.POLICY_NOT_FOUND, policyEnum));
+        PolicyVersionKey key = PolicyVersionKey.builder().policyId(policy.getId()).version(policy.getCurrentVersion()).build();
+        PolicyVersion policyVersion = policyVersionService.findById(key);
+        return policyVersion.getChecksum();
+    }
+
+    private void handleFileIntegrity(PolicyEnum policyEnum, Path filePath) throws IOException {
+        String originalHash = getHashOfCurrentVersionFile(policyEnum);
+        String calculatedHash = SecurityUtils.createHash(filePath.toString());
+        if (!originalHash.equals(calculatedHash)) {
+            log.error("File integrity check failed for policy: {}. File: {}", policyEnum, filePath);
+            throw new IllegalStateException("Hash mismatch detected: File integrity compromised.");
+        }
     }
 
     private static boolean isNotUpdated(String clientVersion, String serverVersion) {

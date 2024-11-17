@@ -15,4 +15,9 @@ public class SecurityUtils {
       return DigestUtils.sha512Hex(fis);
     }
   }
+
+  public boolean verifyFileIntegrity(String filePath, String expectedHash) throws IOException {
+      String calculatedHash = createHash(filePath);
+      return calculatedHash.equals(expectedHash);
+  }
 }
