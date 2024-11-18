@@ -10,15 +10,16 @@ import ir.niopdc.domain.policy.PolicyService;
 import ir.niopdc.domain.policyversion.PolicyVersion;
 import ir.niopdc.domain.policyversion.PolicyVersionKey;
 import ir.niopdc.domain.policyversion.PolicyVersionService;
-import ir.niopdc.policy.utils.FileUtils;
 import ir.niopdc.policy.utils.PolicyUtils;
 import ir.niopdc.policy.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -46,20 +47,18 @@ public class BlackListExporter {
     try {
       ZonedDateTime lastQueryDate = exportBlackList(fileName);
       String checksum = SecurityUtils.createHash(fileName);
-      processPolicyVersionUpdate(lastQueryDate, newVersion, checksum);
+      updatePolicyVersion(lastQueryDate, newVersion, checksum);
     } catch (Exception e) {
       handleFileCreationError(fileName, e);
     }
   }
 
   private ZonedDateTime exportBlackList(String fileName) throws IOException {
-    log.info("Starting blackList export for file: {}", fileName);
-
     List<BlackListCardInfo> blackListCardInfos = new ArrayList<>();
-    ZonedDateTime nowDate = Instant.now().atZone(ZoneId.systemDefault());
+    ZonedDateTime currentDate = Instant.now().atZone(ZoneId.systemDefault());
 
     try (Stream<BlackList> blackListStream =
-        blackListService.streamBlackListMinusWhiteListBeforeDate(nowDate)) {
+        blackListService.streamBlackListMinusWhiteListBeforeDate(currentDate)) {
 
       blackListStream.map(this::createBlackListCardInfo).forEach(blackListCardInfos::add);
       createFileFromBlackList(fileName, blackListCardInfos);
@@ -67,29 +66,21 @@ public class BlackListExporter {
       log.info(
           "Finished blackList export with {} records; last date of query: {}",
           blackListCardInfos.size(),
-          nowDate);
-    } catch (Exception e) {
-      log.error("Error during blackList export stream", e);
-      throw e;
+          currentDate);
     }
-    return nowDate;
+    return currentDate;
   }
 
   private void createFileFromBlackList(String fileName, List<BlackListCardInfo> blackListCardInfos)
       throws IOException {
-    if (blackListCardInfos.isEmpty()) {
-      log.info("No records found, creating an empty file for blackList export");
-      FileUtil.createZipFile(fileName, new byte[0]);
-    } else {
       BlackListResponse response =
           BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
       FileUtil.createZipFile(fileName, response.toByteArray());
-    }
   }
 
-  private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version, String checksum) {
+  private void updatePolicyVersion(ZonedDateTime lastDate, String version, String checksum) {
     insertPolicyVersion(lastDate, version, checksum);
-    updatePolicyCurrentVersion(version);
+    updateCurrentPolicyVersion(version);
   }
 
   private void insertPolicyVersion(ZonedDateTime lastDate, String newVersion, String checksum) {
@@ -116,7 +107,7 @@ public class BlackListExporter {
         .build();
   }
 
-  private void updatePolicyCurrentVersion(String version) {
+  private void updateCurrentPolicyVersion(String version) {
     Policy policy = policyService.findById(PolicyEnum.BLACK_LIST.getValue());
     policy.setCurrentVersion(version);
     policyService.save(policy);
@@ -138,6 +129,6 @@ public class BlackListExporter {
 
   private static void handleFileCreationError(String fileName, Exception e) {
     log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
-    FileUtils.deleteFile(fileName);
+    FileUtils.deleteQuietly(new File(fileName));
   }
 }
