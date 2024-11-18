@@ -48,7 +48,7 @@ public class GrayListExporter {
         String fileName = policyUtils.getGrayListFileName(newVersion);
         try {
             ZonedDateTime lastDateQuery = exportGrayList(fileName);
-            String checksum = SecurityUtils.createHash(fileName);
+            String checksum = SecurityUtils.createSHA512Hash(fileName);
             processPolicyVersionUpdate(lastDateQuery, newVersion, checksum);
         } catch (Exception e) {
             handleFileCreationError(fileName, e);

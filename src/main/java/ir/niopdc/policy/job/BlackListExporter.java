@@ -46,7 +46,7 @@ public class BlackListExporter {
     String fileName = policyUtils.getBlackListFileName(newVersion);
     try {
       ZonedDateTime lastQueryDate = exportBlackList(fileName);
-      String checksum = SecurityUtils.createHash(fileName);
+      String checksum = SecurityUtils.createSHA512Hash(fileName);
       updatePolicyVersion(lastQueryDate, newVersion, checksum);
     } catch (Exception e) {
       handleFileCreationError(fileName, e);

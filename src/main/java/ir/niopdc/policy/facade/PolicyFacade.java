@@ -187,7 +187,7 @@ public class PolicyFacade {
 
     private void handleFileIntegrity(PolicyEnum policyEnum, Path filePath) throws IOException {
         String originalHash = getHashOfCurrentVersionFile(policyEnum);
-        String calculatedHash = SecurityUtils.createHash(filePath.toString());
+        String calculatedHash = SecurityUtils.createSHA512Hash(filePath.toString());
         if (!originalHash.equals(calculatedHash)) {
             log.error("File integrity check failed for policy: {}. File: {}", policyEnum, filePath);
             throw new IllegalStateException("Hash mismatch detected: File integrity compromised.");

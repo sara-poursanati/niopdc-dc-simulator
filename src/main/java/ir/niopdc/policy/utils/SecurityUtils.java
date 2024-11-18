@@ -10,14 +10,14 @@ import java.io.IOException;
 @UtilityClass
 public class SecurityUtils {
 
-  public String createHash(String filePath) throws IOException {
+  public String createSHA512Hash(String filePath) throws IOException {
     try (FileInputStream fis = new FileInputStream(filePath)) {
       return DigestUtils.sha512Hex(fis);
     }
   }
 
-  public boolean verifyFileIntegrity(String filePath, String expectedHash) throws IOException {
-      String calculatedHash = createHash(filePath);
+  public boolean verifyFileSHA512Hash(String filePath, String expectedHash) throws IOException {
+      String calculatedHash = createSHA512Hash(filePath);
       return calculatedHash.equals(expectedHash);
   }
 }
