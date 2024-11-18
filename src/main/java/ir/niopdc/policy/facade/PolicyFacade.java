@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -88,10 +89,10 @@ public class PolicyFacade {
 
     }
 
-    public FilePolicyResponseDto getCompleteBlackList() throws IOException {
+    public FilePolicyResponseDto getCompleteBlackList() throws IOException, GeneralSecurityException {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.BLACK_LIST);
         Path filePath = Path.of(policyUtils.getBlackListFileName(metadata.getVersion()));
-        handleFileIntegrity(PolicyEnum.BLACK_LIST, filePath);
+        checkFileIntegrity(PolicyEnum.BLACK_LIST, filePath);
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
@@ -130,10 +131,10 @@ public class PolicyFacade {
         return getCodingListResponseDto(metadata, codingLists);
     }
 
-    public FilePolicyResponseDto getCompleteGrayList() throws IOException {
+    public FilePolicyResponseDto getCompleteGrayList() throws IOException, GeneralSecurityException {
         PolicyMetadata metadata = loadMetadataByVersion(PolicyEnum.GRAY_LIST);
         Path filePath = Path.of(policyUtils.getGrayListFileName(metadata.getVersion()));
-        handleFileIntegrity(PolicyEnum.GRAY_LIST, filePath);
+        checkFileIntegrity(PolicyEnum.GRAY_LIST, filePath);
         return getFilePolicyResponseDto(metadata, filePath);
     }
 
@@ -185,12 +186,11 @@ public class PolicyFacade {
         return policyVersion.getChecksum();
     }
 
-    private void handleFileIntegrity(PolicyEnum policyEnum, Path filePath) throws IOException {
+    private void checkFileIntegrity(PolicyEnum policyEnum, Path filePath) throws IOException, GeneralSecurityException {
         String originalHash = getHashOfCurrentVersionFile(policyEnum);
-        String calculatedHash = SecurityUtils.createSHA512Hash(filePath.toString());
-        if (!originalHash.equals(calculatedHash)) {
+        if (!SecurityUtils.verifyFileSHA512Hash(filePath.toFile(), originalHash)) {
             log.error("File integrity check failed for policy: {}. File: {}", policyEnum, filePath);
-            throw new IllegalStateException("Hash mismatch detected: File integrity compromised.");
+            throw new GeneralSecurityException("Hash mismatch detected: File integrity compromised.");
         }
     }
 

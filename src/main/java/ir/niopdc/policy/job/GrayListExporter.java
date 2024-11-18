@@ -46,23 +46,24 @@ public class GrayListExporter {
 
         String newVersion = getNextPolicyVersion();
         String fileName = policyUtils.getGrayListFileName(newVersion);
+        File grayListFile = new File(fileName);
         try {
-            ZonedDateTime lastDateQuery = exportGrayList(fileName);
-            String checksum = SecurityUtils.createSHA512Hash(fileName);
+            ZonedDateTime lastDateQuery = exportGrayList(grayListFile);
+            String checksum = SecurityUtils.createSHA512Hash(grayListFile);
             processPolicyVersionUpdate(lastDateQuery, newVersion, checksum);
         } catch (Exception e) {
-            handleFileCreationError(fileName, e);
+            handleFileCreationError(grayListFile, e);
         }
     }
 
-    private ZonedDateTime exportGrayList(String fileName) throws IOException {
+    private ZonedDateTime exportGrayList(File file) throws IOException {
         List<GrayListCardInfo> grayListCardInfos = new ArrayList<>();
         ZonedDateTime currentDate = Instant.now().atZone(ZoneId.systemDefault());
 
         try (Stream<GrayList> grayListStream = grayListService.streamAllBeforeDate(currentDate)) {
 
             grayListStream.map(this::createGrayListCardInfo).forEach(grayListCardInfos::add);
-            createFileFromGrayList(fileName, grayListCardInfos);
+            createFileFromGrayList(file, grayListCardInfos);
 
             log.info(
                     "Finished grayList export with {} records; last date of query: {}",
@@ -73,11 +74,11 @@ public class GrayListExporter {
         return currentDate;
     }
 
-    private void createFileFromGrayList(String fileName, List<GrayListCardInfo> grayListCardInfos)
+    private void createFileFromGrayList(File file, List<GrayListCardInfo> grayListCardInfos)
             throws IOException {
         GrayListResponse response =
                 GrayListResponse.newBuilder().addAllCardInfos(grayListCardInfos).build();
-        FileUtil.createZipFile(fileName, response.toByteArray());
+        FileUtil.createZipFile(file.getPath(), response.toByteArray());
     }
 
     private void processPolicyVersionUpdate(ZonedDateTime lastDate, String version, String checksum) {
@@ -131,8 +132,8 @@ public class GrayListExporter {
                 .build();
     }
 
-    private static void handleFileCreationError(String fileName, Exception e) {
-        log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
-        FileUtils.deleteQuietly(new File(fileName));
+    private static void handleFileCreationError(File file, Exception e) {
+        log.error("Error occurred after creating file, attempting to delete file: {}", file.getName(), e);
+        FileUtils.deleteQuietly(file);
     }
 }

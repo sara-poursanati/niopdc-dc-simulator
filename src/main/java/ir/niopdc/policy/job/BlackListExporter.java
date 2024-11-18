@@ -40,20 +40,19 @@ public class BlackListExporter {
   @Scheduled(cron = "${app.config.cron.black-list}")
   @Transactional
   public void runExportTask() {
-    log.info("Initializing blackList export");
-
     String newVersion = getNextPolicyVersion();
     String fileName = policyUtils.getBlackListFileName(newVersion);
+    File blackListFile = new File(fileName);
     try {
-      ZonedDateTime lastQueryDate = exportBlackList(fileName);
-      String checksum = SecurityUtils.createSHA512Hash(fileName);
+      ZonedDateTime lastQueryDate = exportBlackList(blackListFile);
+      String checksum = SecurityUtils.createSHA512Hash(blackListFile);
       updatePolicyVersion(lastQueryDate, newVersion, checksum);
     } catch (Exception e) {
-      handleFileCreationError(fileName, e);
+      handleFileCreationError(blackListFile, e);
     }
   }
 
-  private ZonedDateTime exportBlackList(String fileName) throws IOException {
+  private ZonedDateTime exportBlackList(File file) throws IOException {
     List<BlackListCardInfo> blackListCardInfos = new ArrayList<>();
     ZonedDateTime currentDate = Instant.now().atZone(ZoneId.systemDefault());
 
@@ -61,7 +60,7 @@ public class BlackListExporter {
         blackListService.streamBlackListMinusWhiteListBeforeDate(currentDate)) {
 
       blackListStream.map(this::createBlackListCardInfo).forEach(blackListCardInfos::add);
-      createFileFromBlackList(fileName, blackListCardInfos);
+      createFileFromBlackList(file, blackListCardInfos);
 
       log.info(
           "Finished blackList export with {} records; last date of query: {}",
@@ -71,11 +70,11 @@ public class BlackListExporter {
     return currentDate;
   }
 
-  private void createFileFromBlackList(String fileName, List<BlackListCardInfo> blackListCardInfos)
+  private void createFileFromBlackList(File file, List<BlackListCardInfo> blackListCardInfos)
       throws IOException {
       BlackListResponse response =
           BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
-      FileUtil.createZipFile(fileName, response.toByteArray());
+      FileUtil.createZipFile(file.getPath(), response.toByteArray());
   }
 
   private void updatePolicyVersion(ZonedDateTime lastDate, String version, String checksum) {
@@ -127,8 +126,8 @@ public class BlackListExporter {
         .build();
   }
 
-  private static void handleFileCreationError(String fileName, Exception e) {
-    log.error("Error occurred after creating file, attempting to delete file: {}", fileName, e);
-    FileUtils.deleteQuietly(new File(fileName));
+  private static void handleFileCreationError(File file, Exception e) {
+    log.error("Error occurred after creating file, attempting to delete file: {}", file.getName(), e);
+    FileUtils.deleteQuietly(file);
   }
 }
