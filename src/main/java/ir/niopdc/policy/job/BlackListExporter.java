@@ -1,9 +1,7 @@
 package ir.niopdc.policy.job;
 
 import ir.niopdc.common.entity.policy.PolicyEnum;
-import ir.niopdc.common.grpc.policy.BlackListCardInfo;
-import ir.niopdc.common.grpc.policy.BlackListResponse;
-import ir.niopdc.common.grpc.policy.OperationEnumMessage;
+import ir.niopdc.common.grpc.policy.*;
 import ir.niopdc.common.util.FileUtil;
 import ir.niopdc.domain.blacklist.BlackList;
 import ir.niopdc.domain.blacklist.BlackListService;
@@ -13,16 +11,21 @@ import ir.niopdc.domain.policyversion.PolicyVersion;
 import ir.niopdc.domain.policyversion.PolicyVersionKey;
 import ir.niopdc.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.utils.PolicyUtils;
+import ir.niopdc.policy.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Service
@@ -34,67 +37,76 @@ public class BlackListExporter {
   private final PolicyService policyService;
   private final PolicyUtils policyUtils;
 
-  @Scheduled(cron = "${app.config.cron.blacklist}")
+  @Scheduled(cron = "${app.config.cron.black-list}")
   @Transactional
   public void runExportTask() {
-    log.info("Initializing blackList export");
-
-    String newVersionId = getNextPolicyVersion();
+    String newVersion = getNextPolicyVersion();
+    String fileName = policyUtils.getBlackListFileName(newVersion);
+    File blackListFile = new File(fileName);
     try {
-      BlackList lastRecord = exportBlackList(policyUtils.getBlackListFileName(newVersionId));
-      processPolicyVersionUpdate(lastRecord, newVersionId);
-    } catch (IOException e) {
-      log.error("Failed to export blackLists", e);
+      ZonedDateTime lastQueryDate = exportBlackList(blackListFile);
+      String checksum = SecurityUtils.createSHA512Hash(blackListFile);
+      updatePolicyVersion(lastQueryDate, newVersion, checksum);
+    } catch (Exception e) {
+      handleFileCreationError(blackListFile, e);
     }
   }
 
-  private BlackList exportBlackList(String filePath) throws IOException {
-    log.info("Starting blackList export");
+  private ZonedDateTime exportBlackList(File file) throws IOException {
+    List<BlackListCardInfo> blackListCardInfos = new ArrayList<>();
+    ZonedDateTime currentDate = Instant.now().atZone(ZoneId.systemDefault());
 
-    AtomicReference<BlackList> lastBlackListRecord = new AtomicReference<>();
-    ConcurrentLinkedQueue<BlackListCardInfo> blackListCardInfos = new ConcurrentLinkedQueue<>();
+    try (Stream<BlackList> blackListStream =
+        blackListService.streamBlackListMinusWhiteListBeforeDate(currentDate)) {
 
-    try (Stream<BlackList> blackListStream = blackListService.streamAllMinusWhiteList()) {
-      blackListStream.forEach(
-          blackList -> {
-            blackListCardInfos.add(createBlackListCardInfo(blackList));
-            lastBlackListRecord.set(blackList);
-          });
+      blackListStream.map(this::createBlackListCardInfo).forEach(blackListCardInfos::add);
+      createFileFromBlackList(file, blackListCardInfos);
 
-      BlackListResponse response = BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
-      FileUtil.createZipFile(filePath, response.toByteArray());
-
-      log.info("Finishing blackList export with {} records", blackListCardInfos.size());
-      log.info("lastBlackListRecord = {}", lastBlackListRecord);
+      log.info(
+          "Finished blackList export with {} records; last date of query: {}",
+          blackListCardInfos.size(),
+          currentDate);
     }
-    return lastBlackListRecord.get();
+    return currentDate;
   }
 
-  private void processPolicyVersionUpdate(BlackList lastBlackListRecord, String version) {
-    Objects.requireNonNull(lastBlackListRecord, "BlackList record cannot be null");
-
-    insertPolicyVersion(lastBlackListRecord, version);
-    updatePolicyCurrentVersion(version);
+  private void createFileFromBlackList(File file, List<BlackListCardInfo> blackListCardInfos)
+      throws IOException {
+      BlackListResponse response =
+          BlackListResponse.newBuilder().addAllCardInfos(blackListCardInfos).build();
+      FileUtil.createZipFile(file.getPath(), response.toByteArray());
   }
 
-  private void insertPolicyVersion(BlackList lastBlackListRecord, String newVersion) {
-    PolicyVersionKey versionKey = PolicyVersionKey.builder()
-            .policyId(PolicyEnum.BLACK_LIST.getValue())
-            .version(newVersion)
-            .build();
+  private void updatePolicyVersion(ZonedDateTime lastDate, String version, String checksum) {
+    insertPolicyVersion(lastDate, version, checksum);
+    updateCurrentPolicyVersion(version);
+  }
 
-    PolicyVersion policyVersion = PolicyVersion.builder()
-            .id(versionKey)
-            .activationTime(lastBlackListRecord.getInsertionDateTime())
-            .releaseTime(lastBlackListRecord.getInsertionDateTime())
-            .versionName(policyUtils.getBlackListVersionName(newVersion))
-            .build();
-
+  private void insertPolicyVersion(ZonedDateTime lastDate, String newVersion, String checksum) {
+    PolicyVersion policyVersion = buildPolicyVersion(lastDate, newVersion, checksum);
     policyVersionService.save(policyVersion);
-    log.info("New policy version record inserted with versionName: {}", policyUtils.getBlackListVersionName(newVersion));
+    log.info(
+        "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
-  private void updatePolicyCurrentVersion(String version) {
+  private PolicyVersion buildPolicyVersion(
+      ZonedDateTime lastDate, String version, String checksum) {
+    PolicyVersionKey versionKey =
+        PolicyVersionKey.builder()
+            .policyId(PolicyEnum.BLACK_LIST.getValue())
+            .version(version)
+            .build();
+
+    return PolicyVersion.builder()
+        .id(versionKey)
+        .versionName(policyUtils.getBlackListVersionName(version))
+        .checksum(checksum)
+        .activationTime(lastDate)
+        .releaseTime(lastDate)
+        .build();
+  }
+
+  private void updateCurrentPolicyVersion(String version) {
     Policy policy = policyService.findById(PolicyEnum.BLACK_LIST.getValue());
     policy.setCurrentVersion(version);
     policyService.save(policy);
@@ -102,14 +114,20 @@ public class BlackListExporter {
   }
 
   private String getNextPolicyVersion() {
-    String currentVersion = policyService.findById(PolicyEnum.BLACK_LIST.getValue()).getCurrentVersion();
-    return String.valueOf(Integer.parseInt(currentVersion) + 1);
+    String currentVersion =
+        policyService.findById(PolicyEnum.BLACK_LIST.getValue()).getCurrentVersion();
+    return currentVersion != null ? String.valueOf(Integer.parseInt(currentVersion) + 1) : "1";
   }
 
-  private static BlackListCardInfo createBlackListCardInfo(BlackList blackList) {
+  private BlackListCardInfo createBlackListCardInfo(BlackList blackList) {
     return BlackListCardInfo.newBuilder()
         .setCardId(blackList.getCardId())
         .setOperation(OperationEnumMessage.INSERT)
         .build();
+  }
+
+  private static void handleFileCreationError(File file, Exception e) {
+    log.error("Error occurred after creating file, attempting to delete file: {}", file.getName(), e);
+    FileUtils.deleteQuietly(file);
   }
 }

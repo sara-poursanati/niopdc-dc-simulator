@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 
 @GrpcService
@@ -86,12 +87,12 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         }
     }
 
-    private void sendCompleteGrayList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+    private void sendCompleteGrayList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException, GeneralSecurityException {
         FilePolicyResponseDto dto = policyFacade.getCompleteGrayList();
         sendChunkedBinaryFile(responseObserver, dto);
     }
 
-    private void sendCompleteBlackList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
+    private void sendCompleteBlackList(StreamObserver<FilePolicyResponse> responseObserver) throws IOException, GeneralSecurityException {
         FilePolicyResponseDto dto = policyFacade.getCompleteBlackList();
         sendChunkedBinaryFile(responseObserver, dto);
     }
