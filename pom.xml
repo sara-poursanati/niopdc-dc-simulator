@@ -11,7 +11,7 @@
 
 	<groupId>ir.niopdc</groupId>
 	<artifactId>niopdc-data-provider</artifactId>
-	<version>1403.06.24</version>
+	<version>1.0.0</version>
 	<name>Niopdc data provider</name>
 	<description>Packages the policies and delivers them to the sender agent</description>
 
