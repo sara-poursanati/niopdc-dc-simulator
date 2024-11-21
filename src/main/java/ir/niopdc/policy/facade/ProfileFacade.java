@@ -1,12 +1,16 @@
 package ir.niopdc.policy.facade;
 
+import ir.niopdc.common.grpc.profile.FuelTerminalMessage;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
 import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
 import ir.niopdc.domain.fuelstation.FuelStation;
+import ir.niopdc.domain.fuelstation.FuelStationService;
 import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicy;
 import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicyService;
+import ir.niopdc.domain.fuelterminal.FuelTerminal;
 import ir.niopdc.domain.fuelterminal.FuelTerminalService;
+import ir.niopdc.domain.mediagateway.MGType;
 import ir.niopdc.domain.mediagateway.MediaGateway;
 import ir.niopdc.domain.mediagateway.MediaGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +60,8 @@ public class ProfileFacade {
                 .setFuelStationId(fuelStation.getId())
                 .setTerminalCount((int)fuelTerminalService.getPtCountByFuelStation(fuelStation.getId()))
                 .setZoneId(fuelStation.getZoneId())
-                .addAllTopicPolicies(getProfileTopicPolicies(fuelStationPolicies));
+                .addAllTopicPolicies(getProfileTopicPolicies(fuelStationPolicies))
+                .addAllTerminals(getProfileTerminals(mediaGateway));
         return builder.build();
     }
 
@@ -66,6 +71,18 @@ public class ProfileFacade {
             addTopicPolicy(policyModel, profileTopicPolicies);
         }
         return profileTopicPolicies;
+    }
+
+    private List<FuelTerminalMessage> getProfileTerminals(MediaGateway mediaGateway) {
+        List<FuelTerminalMessage> profileTerminals = new ArrayList<>();
+        if (mediaGateway.getMgType() == MGType.PT) {
+            addFuelTerminalMessage(mediaGateway.getFuelTerminal().getId().getTerminalId(), profileTerminals);
+        } else {
+            for (FuelTerminal terminal : fuelTerminalService.findAllByStationId(mediaGateway.getFuelStation().getId())) {
+                addFuelTerminalMessage(terminal.getId().getTerminalId(), profileTerminals);
+            }
+        }
+        return profileTerminals;
     }
 
     private static void addTopicPolicy(FuelStationPolicy policyModel, List<ProfileTopicPolicy> profileTopicPolicies) {
@@ -78,6 +95,13 @@ public class ProfileFacade {
                 .setSlightDelay(policyModel.getSlightDelay())
                 .setMaxBigDelayTryCount(policyModel.getMaxBigDelayTryCount())
                 .setMaxSlightDelayTryCount(policyModel.getMaxSlightDelayTryCount())
+                .build());
+    }
+
+    private static void addFuelTerminalMessage(String terminalId, List<FuelTerminalMessage> fuelTerminalMessages) {
+        fuelTerminalMessages.add(FuelTerminalMessage
+                .newBuilder()
+                .setId(terminalId)
                 .build());
     }
 }
