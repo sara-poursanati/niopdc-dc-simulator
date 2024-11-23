@@ -5,12 +5,11 @@ import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
 import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
 import ir.niopdc.domain.fuelstation.FuelStation;
-import ir.niopdc.domain.fuelstation.FuelStationService;
 import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicy;
 import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicyService;
 import ir.niopdc.domain.fuelterminal.FuelTerminal;
 import ir.niopdc.domain.fuelterminal.FuelTerminalService;
-import ir.niopdc.domain.mediagateway.MGType;
+import ir.niopdc.domain.mediagateway.MediaGatewayType;
 import ir.niopdc.domain.mediagateway.MediaGateway;
 import ir.niopdc.domain.mediagateway.MediaGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +74,7 @@ public class ProfileFacade {
 
     private List<FuelTerminalMessage> getProfileTerminals(MediaGateway mediaGateway) {
         List<FuelTerminalMessage> profileTerminals = new ArrayList<>();
-        if (mediaGateway.getMgType() == MGType.PT) {
+        if (mediaGateway.getMediaGatewayType() == MediaGatewayType.PT) {
             addFuelTerminalMessage(mediaGateway.getFuelTerminal().getId().getTerminalId(), profileTerminals);
         } else {
             for (FuelTerminal terminal : fuelTerminalService.findAllByStationId(mediaGateway.getFuelStation().getId())) {
