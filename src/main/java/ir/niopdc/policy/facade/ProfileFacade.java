@@ -74,13 +74,18 @@ public class ProfileFacade {
 
     private List<FuelTerminalMessage> getProfileTerminals(MediaGateway mediaGateway) {
         List<FuelTerminalMessage> profileTerminals = new ArrayList<>();
+
         if (mediaGateway.getMediaGatewayType() == MediaGatewayType.PT) {
-            addFuelTerminalMessage(mediaGateway.getFuelTerminal().getId().getTerminalId(), profileTerminals);
-        } else {
+            profileTerminals.add(getFuelTerminalMessage(mediaGateway.getFuelTerminal()));
+        } else if (mediaGateway.getMediaGatewayType() == MediaGatewayType.OFFICE) {
+            //TODO use fuel station terminals
             for (FuelTerminal terminal : fuelTerminalService.findAllByStationId(mediaGateway.getFuelStation().getId())) {
-                addFuelTerminalMessage(terminal.getId().getTerminalId(), profileTerminals);
+                profileTerminals.add(getFuelTerminalMessage(terminal));
             }
+        } else {
+            throw new IllegalArgumentException("Unsupported media gateway type.");
         }
+
         return profileTerminals;
     }
 
@@ -97,10 +102,10 @@ public class ProfileFacade {
                 .build());
     }
 
-    private static void addFuelTerminalMessage(String terminalId, List<FuelTerminalMessage> fuelTerminalMessages) {
-        fuelTerminalMessages.add(FuelTerminalMessage
+    private static FuelTerminalMessage getFuelTerminalMessage(FuelTerminal fuelTerminal) {
+        return (FuelTerminalMessage
                 .newBuilder()
-                .setId(terminalId)
+                .setId(fuelTerminal.getFuelId())
                 .build());
     }
 }
