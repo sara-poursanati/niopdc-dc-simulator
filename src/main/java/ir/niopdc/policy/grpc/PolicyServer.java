@@ -124,6 +124,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
                 .setMetadata(dto.getMetadata());
         if (dto.getFile() != null) {
             byte[] bytes = Files.readAllBytes(dto.getFile());
+
             builder.setFile(ByteString.copyFrom(bytes));
         }
 

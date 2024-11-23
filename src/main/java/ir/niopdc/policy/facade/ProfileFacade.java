@@ -1,12 +1,15 @@
 package ir.niopdc.policy.facade;
 
+import ir.niopdc.common.grpc.profile.FuelTerminalMessage;
 import ir.niopdc.common.grpc.profile.ProfileRequest;
 import ir.niopdc.common.grpc.profile.ProfileResponse;
 import ir.niopdc.common.grpc.profile.ProfileTopicPolicy;
 import ir.niopdc.domain.fuelstation.FuelStation;
 import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicy;
 import ir.niopdc.domain.fuelstationpolicy.FuelStationPolicyService;
+import ir.niopdc.domain.fuelterminal.FuelTerminal;
 import ir.niopdc.domain.fuelterminal.FuelTerminalService;
+import ir.niopdc.domain.mediagateway.MediaGatewayType;
 import ir.niopdc.domain.mediagateway.MediaGateway;
 import ir.niopdc.domain.mediagateway.MediaGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +59,8 @@ public class ProfileFacade {
                 .setFuelStationId(fuelStation.getId())
                 .setTerminalCount((int)fuelTerminalService.getPtCountByFuelStation(fuelStation.getId()))
                 .setZoneId(fuelStation.getZoneId())
-                .addAllTopicPolicies(getProfileTopicPolicies(fuelStationPolicies));
+                .addAllTopicPolicies(getProfileTopicPolicies(fuelStationPolicies))
+                .addAllTerminals(getProfileTerminals(mediaGateway));
         return builder.build();
     }
 
@@ -66,6 +70,23 @@ public class ProfileFacade {
             addTopicPolicy(policyModel, profileTopicPolicies);
         }
         return profileTopicPolicies;
+    }
+
+    private List<FuelTerminalMessage> getProfileTerminals(MediaGateway mediaGateway) {
+        List<FuelTerminalMessage> profileTerminals = new ArrayList<>();
+
+        if (mediaGateway.getMediaGatewayType() == MediaGatewayType.PT) {
+            profileTerminals.add(getFuelTerminalMessage(mediaGateway.getFuelTerminal()));
+        } else if (mediaGateway.getMediaGatewayType() == MediaGatewayType.OFFICE) {
+            //TODO use fuel station terminals
+            for (FuelTerminal terminal : fuelTerminalService.findAllByStationId(mediaGateway.getFuelStation().getId())) {
+                profileTerminals.add(getFuelTerminalMessage(terminal));
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported media gateway type.");
+        }
+
+        return profileTerminals;
     }
 
     private static void addTopicPolicy(FuelStationPolicy policyModel, List<ProfileTopicPolicy> profileTopicPolicies) {
@@ -78,6 +99,13 @@ public class ProfileFacade {
                 .setSlightDelay(policyModel.getSlightDelay())
                 .setMaxBigDelayTryCount(policyModel.getMaxBigDelayTryCount())
                 .setMaxSlightDelayTryCount(policyModel.getMaxSlightDelayTryCount())
+                .build());
+    }
+
+    private static FuelTerminalMessage getFuelTerminalMessage(FuelTerminal fuelTerminal) {
+        return (FuelTerminalMessage
+                .newBuilder()
+                .setId(fuelTerminal.getFuelId())
                 .build());
     }
 }
