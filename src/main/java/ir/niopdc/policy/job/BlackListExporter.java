@@ -13,6 +13,7 @@ import ir.niopdc.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.utils.PolicyUtils;
 import ir.niopdc.policy.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,9 +32,8 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BlackListExporter {
-
-  private static final Logger logger = LogManager.getLogger(BlackListExporter.class);
 
   private final BlackListService blackListService;
   private final PolicyVersionService policyVersionService;
@@ -64,7 +64,7 @@ public class BlackListExporter {
       blackListStream.map(this::createBlackListCardInfo).forEach(blackListCardInfos::add);
       createFileFromBlackList(file, blackListCardInfos);
 
-      logger.info(
+      log.info(
               "Finished blackList export with {} records; last date of query: {}",
               blackListCardInfos.size(),
               currentDate);
@@ -87,7 +87,7 @@ public class BlackListExporter {
   private void insertPolicyVersion(ZonedDateTime lastDate, String newVersion, String checksum) {
     PolicyVersion policyVersion = buildPolicyVersion(lastDate, newVersion, checksum);
     policyVersionService.save(policyVersion);
-    logger.info(
+    log.info(
             "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
   }
 
@@ -112,7 +112,7 @@ public class BlackListExporter {
     Policy policy = policyService.findById(PolicyEnum.BLACK_LIST.getValue());
     policy.setCurrentVersion(version);
     policyService.save(policy);
-    logger.info("Updated currentVersion in Policy table for policyId {}: {}", policy.getId(), version);
+    log.info("Updated currentVersion in Policy table for policyId {}: {}", policy.getId(), version);
   }
 
   private String getNextPolicyVersion() {
@@ -129,7 +129,7 @@ public class BlackListExporter {
   }
 
   private static void handleFileCreationError(File file, Exception e) {
-    logger.error("Error occurred after creating file, attempting to delete file: {}", file.getName(), e);
+    log.error("Error occurred after creating file, attempting to delete file: {}", file.getName(), e);
     FileUtils.deleteQuietly(file);
   }
 }

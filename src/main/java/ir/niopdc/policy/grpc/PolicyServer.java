@@ -7,6 +7,7 @@ import ir.niopdc.policy.dto.FilePolicyResponseDto;
 import ir.niopdc.policy.dto.ListResponseDto;
 import ir.niopdc.policy.facade.PolicyFacade;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -19,9 +20,8 @@ import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 
 @GrpcService
+@Slf4j
 public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
-
-    private static final Logger logger = LogManager.getLogger(PolicyServer.class);
 
     private PolicyFacade policyFacade;
 
@@ -119,7 +119,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
     }
 
     private static void sendBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
-        logger.info("Sending file started at {}", LocalDateTime.now());
+        log.info("Sending file started at {}", LocalDateTime.now());
 
         FilePolicyResponse.Builder builder = FilePolicyResponse.newBuilder()
                 .setMetadata(dto.getMetadata());
@@ -132,11 +132,11 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
         responseObserver.onNext(builder.build());
 
         responseObserver.onCompleted();
-        logger.info("Sending file ended at {}", LocalDateTime.now());
+        log.info("Sending file ended at {}", LocalDateTime.now());
     }
 
     private void sendChunkedBinaryFile(StreamObserver<FilePolicyResponse> responseObserver, FilePolicyResponseDto dto) throws IOException {
-        logger.info("Sending file {} started at {}", dto.getFile().toString(), LocalDateTime.now());
+        log.info("Sending file {} started at {}", dto.getFile().toString(), LocalDateTime.now());
         responseObserver.onNext(FilePolicyResponse.newBuilder()
                 .setMetadata(dto.getMetadata()).build());
         try (InputStream input = new FileInputStream(dto.getFile().toFile())) {
@@ -146,7 +146,7 @@ public class PolicyServer extends MGPolicyServiceGrpc.MGPolicyServiceImplBase {
             }
         }
         responseObserver.onCompleted();
-        logger.info("Sending file ended at {}", LocalDateTime.now());
+        log.info("Sending file ended at {}", LocalDateTime.now());
     }
 
     private void sendDifferentialList(ListResponseDto listResponseDto, StreamObserver<FilePolicyResponse> responseObserver) throws IOException {
