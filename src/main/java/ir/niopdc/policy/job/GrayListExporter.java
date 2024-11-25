@@ -15,8 +15,9 @@ import ir.niopdc.domain.policyversion.PolicyVersionService;
 import ir.niopdc.policy.utils.PolicyUtils;
 import ir.niopdc.policy.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,9 +32,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class GrayListExporter {
+
+    private static final Logger logger = LogManager.getLogger(GrayListExporter.class);
+
     private final GrayListService grayListService;
     private final PolicyVersionService policyVersionService;
     private final PolicyService policyService;
@@ -42,7 +45,7 @@ public class GrayListExporter {
     @Scheduled(cron = "${app.config.cron.gray-list}")
     @Transactional
     public void runExportTask() {
-        log.info("Initializing grayList export");
+        logger.info("Initializing grayList export");
 
         String newVersion = getNextPolicyVersion();
         String fileName = policyUtils.getGrayListFileName(newVersion);
@@ -65,7 +68,7 @@ public class GrayListExporter {
             grayListStream.map(this::createGrayListCardInfo).forEach(grayListCardInfos::add);
             createFileFromGrayList(file, grayListCardInfos);
 
-            log.info(
+            logger.info(
                     "Finished grayList export with {} records; last date of query: {}",
                     grayListCardInfos.size(),
                     currentDate);
@@ -89,7 +92,7 @@ public class GrayListExporter {
     private void insertPolicyVersion(ZonedDateTime lastDate, String version, String checksum) {
         PolicyVersion policyVersion = buildPolicyVersion(lastDate, version, checksum);
         policyVersionService.save(policyVersion);
-        log.info(
+        logger.info(
                 "New policy version record inserted with versionName: {}", policyVersion.getVersionName());
     }
 
@@ -114,7 +117,7 @@ public class GrayListExporter {
         Policy policy = policyService.findById(PolicyEnum.GRAY_LIST.getValue());
         policy.setCurrentVersion(version);
         policyService.save(policy);
-        log.info("Updated currentVersion in Policy table for policyId {}: {}", policy.getId(), version);
+        logger.info("Updated currentVersion in Policy table for policyId {}: {}", policy.getId(), version);
     }
 
     private String getNextPolicyVersion() {
@@ -133,7 +136,7 @@ public class GrayListExporter {
     }
 
     private static void handleFileCreationError(File file, Exception e) {
-        log.error("Error occurred after creating file, attempting to delete file: {}", file.getName(), e);
+        logger.error("Error occurred after creating file, attempting to delete file: {}", file.getName(), e);
         FileUtils.deleteQuietly(file);
     }
 }

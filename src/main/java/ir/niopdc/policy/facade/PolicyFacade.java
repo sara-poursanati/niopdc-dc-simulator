@@ -41,10 +41,14 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-@Slf4j
+//@Slf4j
 @Service
 public class PolicyFacade {
+    private static final Logger logger = LogManager.getLogger(PolicyFacade.class);
+
     private AppConfig appConfig;
     private FuelService fuelService;
     private RegionalQuotaRuleService regionalQuotaRuleService;
@@ -86,7 +90,6 @@ public class PolicyFacade {
         } else {
             return GrpcUtils.generateRegionalQuotaResponse(metadata);
         }
-
     }
 
     public FilePolicyResponseDto getCompleteBlackList() throws IOException, GeneralSecurityException {
@@ -189,7 +192,7 @@ public class PolicyFacade {
     private void checkFileIntegrity(PolicyEnum policyEnum, Path filePath) throws IOException, GeneralSecurityException {
         String originalHash = getHashOfCurrentVersionFile(policyEnum);
         if (!SecurityUtils.verifyFileSHA512Hash(filePath.toFile(), originalHash)) {
-            log.error("File integrity check failed for policy: {}. File: {}", policyEnum, filePath);
+            logger.error("File integrity check failed for policy: {}. File: {}", policyEnum, filePath);
             throw new GeneralSecurityException("Hash mismatch detected: File integrity compromised.");
         }
     }
@@ -321,4 +324,5 @@ public class PolicyFacade {
     public void setPolicyUtils(PolicyUtils policyUtils) {
         this.policyUtils = policyUtils;
     }
+
 }
