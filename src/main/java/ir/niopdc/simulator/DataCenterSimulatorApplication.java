@@ -10,10 +10,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(basePackages = {"ir.niopdc.*"})
 @EnableAspectJAutoProxy
 @EnableScheduling
-public class PolicyPackagerApplication {
+public class DataCenterSimulatorApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PolicyPackagerApplication.class, args);
+		SpringApplication.run(DataCenterSimulatorApplication.class, args);
 	}
 
 }
