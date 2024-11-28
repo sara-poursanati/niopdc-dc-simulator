@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
     <Properties>
-        <Property name="logPath">target/logfile</Property>
+        <Property name="logPath">${sys:user.home}/logs/dc-simulator</Property>
+        <Property name="fileName">dc-simulator.log</Property>
     </Properties>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
-        <!-- Log file -->
-        <File name="FileLogger" fileName="${logPath}/application.log" append="true">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
-        </File>
 
-        <RollingFile name="RollingFileLogger" fileName="${logPath}/rolling-application.log"
-                     filePattern="${logPath}/rolling-application-%d{yyyy-MM-dd-HH-mm}.log.gz">
+        <RollingFile name="RollingFileLogger" fileName="${logPath}/${fileName}"
+                     filePattern="${logPath}/${fileName}-%d{yyyy-MM-dd-HH-mm}.log.gz">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="50MB" />
@@ -25,7 +22,6 @@
     <Loggers>
         <Root level="info">
             <AppenderRef ref="Console" />
-            <AppenderRef ref="FileLogger" />
             <AppenderRef ref="RollingFileLogger" />
         </Root>
     </Loggers>
