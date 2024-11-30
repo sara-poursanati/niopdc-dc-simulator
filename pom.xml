@@ -11,7 +11,7 @@
 
 	<groupId>ir.niopdc</groupId>
 	<artifactId>niopdc-dc-simulator</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<name>DataCenter Simulator</name>
 	<description>Simulates the current data center of NIOPDC</description>
 

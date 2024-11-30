@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.Random;
 import java.util.UUID;
@@ -18,8 +20,6 @@ public class BlackListTask {
 
     private final Random rand = new Random();
 
-    private final String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-
     private BlackListService blackListService;
 
     @Autowired
@@ -29,7 +29,7 @@ public class BlackListTask {
 
     @Scheduled(cron = "${app.config.cron.black-list}")
     @Transactional
-    public void RunBlackListTask() {
+    public void runBlackListTask() throws SQLException {
 
         String cardId = UUID.randomUUID().toString();
 
@@ -45,13 +45,14 @@ public class BlackListTask {
             // save to DB
             blackListService.save(blackList);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new SQLException(e);
         }
 
     }
 
     private String getRandomString() {
-        return SALTCHARS.substring(0, rand.nextInt(SALTCHARS.length()));
+        String saltchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+        return saltchars.substring(0, rand.nextInt(saltchars.length()));
     }
 
 }

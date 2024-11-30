@@ -33,4 +33,4 @@ build/
 .vscode/
 
 ### Spring Boot ###
-src/main/resources/**/appliaction-dev.properties
+/src/main/resources/application-dev.properties
