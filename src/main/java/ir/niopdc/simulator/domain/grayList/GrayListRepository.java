@@ -1,4 +1,4 @@
-package ir.niopdc.simulator.gray;
+package ir.niopdc.simulator.domain.grayList;
 
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
