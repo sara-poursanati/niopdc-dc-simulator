@@ -1,4 +1,4 @@
-package ir.niopdc.simulator.domain.grayList;
+package ir.niopdc.simulator.domain.graylist;
 
 public enum GrayListType {
     ERROR("01"),

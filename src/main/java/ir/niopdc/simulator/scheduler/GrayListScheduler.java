@@ -1,8 +1,8 @@
 package ir.niopdc.simulator.scheduler;
 
-import ir.niopdc.simulator.domain.grayList.GrayList;
-import ir.niopdc.simulator.domain.grayList.GrayListService;
-import ir.niopdc.simulator.domain.grayList.GrayListType;
+import ir.niopdc.simulator.domain.graylist.GrayList;
+import ir.niopdc.simulator.domain.graylist.GrayListService;
+import ir.niopdc.simulator.domain.graylist.GrayListType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Component;
