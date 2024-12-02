@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @EnableJpaRepositories(basePackages = {"ir.niopdc..*"})
-@EntityScan({"ir.niopdc.domain.*"})
+@EntityScan(basePackages = "ir.niopdc.simulator.domain")
 @EnableTransactionManagement
 public class JpaConfig {
 }
