@@ -3,6 +3,7 @@ package ir.niopdc.simulator.scheduler;
 import ir.niopdc.simulator.domain.grayList.GrayList;
 import ir.niopdc.simulator.domain.grayList.GrayListService;
 import ir.niopdc.simulator.domain.grayList.GrayListType;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.Random;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class GrayListScheduler {
 
@@ -32,7 +34,7 @@ public class GrayListScheduler {
         grayList.setUserId(RandomStringUtils.randomNumeric(10));
 
         grayListService.save(grayList);
-        System.out.println("Gray Card created: " + grayList.getCardId());
+        log.info("Gray Card created: " + grayList.getCardId());
     }
 }
 
