@@ -1,4 +1,4 @@
-package ir.niopdc.simulator.scheduler;
+package ir.niopdc.simulator.job;
 
 import ir.niopdc.simulator.domain.graylist.GrayList;
 import ir.niopdc.simulator.domain.graylist.GrayListService;
@@ -23,7 +23,7 @@ public class GrayListScheduler {
         this.grayListService = grayListService;
     }
 
-    @Scheduled(fixedRate = 100000)
+    @Scheduled(cron = "${app.config.cron.gray-list})")
     public void generateGrayList() {
         GrayList grayList = new GrayList();
         grayList.setCardId(UUID.randomUUID().toString());
@@ -34,7 +34,7 @@ public class GrayListScheduler {
         grayList.setUserId(RandomStringUtils.randomNumeric(10));
 
         grayListService.save(grayList);
-        log.info("Gray Card created: " + grayList.getCardId());
+        log.info("Gray Card created: {}", grayList.getCardId());
     }
 }
 
