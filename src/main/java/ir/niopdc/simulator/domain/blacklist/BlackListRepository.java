@@ -1,4 +1,4 @@
-package ir.niopdc.simulator.blacklist;
+package ir.niopdc.simulator.domain.blacklist;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

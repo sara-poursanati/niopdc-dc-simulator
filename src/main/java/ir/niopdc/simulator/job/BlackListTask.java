@@ -1,8 +1,9 @@
-package ir.niopdc.simulator.tasks;
+package ir.niopdc.simulator.job;
 
-import ir.niopdc.simulator.blacklist.BlackList;
-import ir.niopdc.simulator.blacklist.BlackListService;
+import ir.niopdc.simulator.domain.blacklist.BlackList;
+import ir.niopdc.simulator.domain.blacklist.BlackListService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -10,15 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.time.ZonedDateTime;
-import java.util.Random;
 import java.util.UUID;
 
 
 @Service
 @RequiredArgsConstructor
 public class BlackListTask {
-
-    private final Random rand = new Random();
 
     private BlackListService blackListService;
 
@@ -29,30 +27,25 @@ public class BlackListTask {
 
     @Scheduled(cron = "${app.config.cron.black-list}")
     @Transactional
-    public void runBlackListTask() throws SQLException {
+    public void runBlackListTask() {
 
         String cardId = UUID.randomUUID().toString();
 
         BlackList blackList = new BlackList();
 
         blackList.setCardId(cardId);
-        blackList.setReleaseTime(ZonedDateTime.now());
-        blackList.setActiveTime(ZonedDateTime.now());
+        ZonedDateTime currentDateTime = ZonedDateTime.now();
+        blackList.setReleaseTime(currentDateTime);
+        blackList.setActiveTime(currentDateTime);
         blackList.setVersion(getRandomString());
         blackList.setReason(getRandomString());
 
-        try {
-            // save to DB
-            blackListService.save(blackList);
-        } catch (Exception e) {
-            throw new SQLException(e);
-        }
-
+        // save to DB
+        blackListService.save(blackList);
     }
 
     private String getRandomString() {
-        String saltchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        return saltchars.substring(0, rand.nextInt(saltchars.length()));
+        return RandomStringUtils.randomAlphanumeric(5);
     }
 
 }
