@@ -9,14 +9,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 
 @Service
 @RequiredArgsConstructor
-public class BlackListTask {
+public class BlackListGenerator {
 
     private BlackListService blackListService;
 

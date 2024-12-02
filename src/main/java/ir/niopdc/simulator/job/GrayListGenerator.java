@@ -14,12 +14,12 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-public class GrayListScheduler {
+public class GrayListGenerator {
 
     private final GrayListService grayListService;
     private final Random random = new Random();
 
-    public GrayListScheduler(GrayListService grayListService) {
+    public GrayListGenerator(GrayListService grayListService) {
         this.grayListService = grayListService;
     }
 
