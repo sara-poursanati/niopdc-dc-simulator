@@ -1,6 +1,6 @@
 package ir.niopdc.simulator.domain.blacklist;
 
-import ir.niopdc.simulator.base.BaseService;
+import ir.niopdc.common.entity.base.BaseService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
