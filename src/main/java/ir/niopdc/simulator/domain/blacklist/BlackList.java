@@ -1,4 +1,4 @@
-package ir.niopdc.simulator.blacklist;
+package ir.niopdc.simulator.domain.blacklist;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

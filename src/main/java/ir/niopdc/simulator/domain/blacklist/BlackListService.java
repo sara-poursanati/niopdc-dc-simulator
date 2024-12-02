@@ -1,4 +1,4 @@
-package ir.niopdc.simulator.blacklist;
+package ir.niopdc.simulator.domain.blacklist;
 
 import ir.niopdc.simulator.base.BaseService;
 import org.springframework.data.domain.Page;
