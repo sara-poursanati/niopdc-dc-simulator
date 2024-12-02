@@ -12,8 +12,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class DataCenterSimulatorApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(DataCenterSimulatorApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(DataCenterSimulatorApplication.class, args);
+    }
 
 }
