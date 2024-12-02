@@ -1,10 +1,10 @@
-package ir.niopdc.simulator.policy;
+package ir.niopdc.simulator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class PolicyMetadataPackagerApplicationTests {
+class DataCenterSimulatorApplicationTest {
 
 	@Test
 	void contextLoads() {
