@@ -23,7 +23,7 @@ public class GrayListGenerator {
         this.grayListService = grayListService;
     }
 
-    @Scheduled(cron = "${app.config.cron.gray-list})")
+    @Scheduled(cron = "${app.config.cron.gray-list}")
     public void generateGrayList() {
         GrayList grayList = new GrayList();
         grayList.setCardId(UUID.randomUUID().toString());
