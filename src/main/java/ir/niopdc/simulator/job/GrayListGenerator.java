@@ -12,6 +12,8 @@ import java.time.ZonedDateTime;
 import java.util.Random;
 import java.util.UUID;
 
+import static org.apache.commons.lang3.RandomStringUtils.*;
+
 @Slf4j
 @Component
 public class GrayListGenerator {
@@ -23,7 +25,7 @@ public class GrayListGenerator {
         this.grayListService = grayListService;
     }
 
-    @Scheduled(cron = "${app.config.cron.gray-list})")
+    @Scheduled(cron = "${app.config.cron.gray-list}")
     public void generateGrayList() {
         GrayList grayList = new GrayList();
         grayList.setCardId(UUID.randomUUID().toString());
@@ -31,7 +33,7 @@ public class GrayListGenerator {
         grayList.setReason(RandomStringUtils.randomAlphabetic(20));
         grayList.setType(GrayListType.values()[random.nextInt(GrayListType.values().length)]);
         grayList.setDateTime(ZonedDateTime.now());
-        grayList.setUserId(RandomStringUtils.randomNumeric(10));
+        grayList.setUserId(randomNumeric(10));
 
         grayListService.save(grayList);
         log.info("Gray Card created: {}", grayList.getCardId());
