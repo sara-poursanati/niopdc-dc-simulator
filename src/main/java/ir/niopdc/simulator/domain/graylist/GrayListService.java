@@ -5,8 +5,4 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class GrayListService extends BaseService<GrayListRepository, GrayList, String> {
-
-    public void removeGrayList(String cardId) {
-        getRepository().deleteById(cardId);
-    }
 }
