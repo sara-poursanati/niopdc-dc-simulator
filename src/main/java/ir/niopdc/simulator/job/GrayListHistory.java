@@ -23,7 +23,7 @@ public class GrayListHistory {
         this.grayListService = grayListService;
     }
 
-    @Scheduled(cron = "${app.config.cron.gray-list}")
+    @Scheduled(cron = "${app.config.cron.gray-history}")
     @Transactional
     public void removeGrayHistory() {
         List<GrayList> grayLists = grayListService.getRepository().findAll();
