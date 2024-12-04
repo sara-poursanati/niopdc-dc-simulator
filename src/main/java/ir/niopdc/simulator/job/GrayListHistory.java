@@ -26,7 +26,7 @@ public class GrayListHistory {
     @Scheduled(cron = "${app.config.cron.gray-history}")
     @Transactional
     public void removeGrayHistory() {
-        List<GrayList> grayLists = grayListService.getRepository().findAll();
+        List<GrayList> grayLists = grayListService.getRepository().findTop10By();
         for (GrayList grayList : grayLists) {
             GrayHistory grayHistory = new GrayHistory(
                     grayList.getCardId(),
