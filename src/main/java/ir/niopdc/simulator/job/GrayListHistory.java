@@ -20,11 +20,11 @@ public class GrayListHistory {
         this.grayListService = grayListService;
     }
 
-    public Optional<GrayList> removeFromGrayList(String cardId) {
+    public void removeFromGrayList(String cardId) {
         Optional<GrayList> grayList = grayListService.getRepository().findById(cardId);
-        grayList.ifPresent(grayListService.getRepository()::delete);
-        return grayList;
+        grayList.ifPresent(list -> grayListService.deleteById(cardId));
     }
+
 
     @PreRemove
     public void removeGrayHistory(GrayList grayList) {
