@@ -16,6 +16,8 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 public class GrayHistory {
 
+    public static final String OPERATION_DELETE = "D";
+
     @Id
     private String cardId;
 
@@ -29,5 +31,5 @@ public class GrayHistory {
 
     private Timestamp dmTime;
 
-    private String dmType = "D";
+    private String dmType;
 }

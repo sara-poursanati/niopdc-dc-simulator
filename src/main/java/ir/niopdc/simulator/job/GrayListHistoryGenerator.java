@@ -12,13 +12,13 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @Component
-public class GrayListHistory {
+public class GrayListHistoryGenerator {
 
     private final GrayHistoryService grayHistoryService;
     private final GrayListService grayListService;
 
 
-    public GrayListHistory(GrayHistoryService grayHistoryService, GrayListService grayListService) {
+    public GrayListHistoryGenerator(GrayHistoryService grayHistoryService, GrayListService grayListService) {
         this.grayHistoryService = grayHistoryService;
         this.grayListService = grayListService;
     }
@@ -35,7 +35,7 @@ public class GrayListHistory {
                     grayList.getType().toString(),
                     grayList.getUserId(),
                     new Timestamp(System.currentTimeMillis()),
-                    "D"
+                    GrayHistory.OPERATION_DELETE
             );
             grayHistoryService.save(grayHistory);
             grayListService.deleteById(grayList.getCardId());
