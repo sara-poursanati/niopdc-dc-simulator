@@ -27,7 +27,7 @@ public class GrayListGenerator {
     public void generateGrayList() {
         GrayList grayList = new GrayList();
 
-        String cardId = String.format("%08X", random.nextInt(0xFFFFFFF));
+        String cardId = String.format("%08X", random.nextInt(0xFFFFFFF)).toLowerCase();
 
         grayList.setCardId(cardId);
         grayList.setValideId(UUID.randomUUID().toString());

@@ -22,7 +22,7 @@ public class BlackListGenerator {
     @Transactional
     public void runBlackListTask() {
 
-        String cardId = String.format("%08X", random.nextInt(0xFFFFFFF));
+        String cardId = String.format("%08X", random.nextInt(0xFFFFFFF)).toLowerCase();
 
         BlackList blackList = new BlackList();
 
